@@ -1,0 +1,7 @@
+result/
+testing/
+*.csv
+*.html
+~*
+__pycache__
+.idea
