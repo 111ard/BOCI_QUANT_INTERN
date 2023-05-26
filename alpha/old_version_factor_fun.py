@@ -205,7 +205,7 @@ def main(category, factor_input, analysis, summary):
 
 # open_browser = False
 # 起始截止日期
-pwd = os.path.abspath(__file__)[:-13]
+pwd = os.path.abspath(__file__)[:-len(os.path.basename(__file__))]
 with open(pwd+ 'config.json') as f:
     data = json.load(f)
 
