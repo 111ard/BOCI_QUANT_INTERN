@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import matplotlib.dates as mdate
-
+import math
 
 class CalculatePerformance():
     """
@@ -139,11 +139,13 @@ NV_sequence.index = pd.to_datetime(NV_sequence.index,format='%Y%m%d')
 benchmark = original_data_reset_index.groupby('trading_date').close.apply(lambda x: x.iloc[-1])
 benchmark = benchmark/benchmark.iloc[0]
 benchmark.index = pd.to_datetime(benchmark.index, format='%Y%m%d')
+
 ax = plt.gca()
 ax.xaxis.set_major_locator(ticker.MultipleLocator(300))
 ax.xaxis.set_major_formatter(mdate.DateFormatter('%Y'))
 plt.plot(NV_sequence)
 plt.plot(benchmark)
 plt.legend(['net_value', 'benchmark'])
+plt.show()
 original_summary = pd.DataFrame({'策略':NV_sequence,'基准':benchmark})
 final = summaryOutput(originalSequence = original_summary,valueFrequency= 252,risk_free_rate=0.01)
