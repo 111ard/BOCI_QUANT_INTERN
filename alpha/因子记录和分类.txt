@@ -1,0 +1,27 @@
+1、基本面因子:账面市值比; bp;天风金工组
+2、基本面因子:账面市值比三年分位数; bp_3y_percentile; 天风金工组
+3、基本面因子:季度净利润/市值; quarterly_ep; 天风金工组
+4、基本面因子:季度净利润/市值的一年分位数; quarterly_ep_1y_percentile; 天风金工组
+5、基本面因子:季度总营收/市值; quarterly_sp; 天风金工组
+6、基本面因子:季度总营收/市值的一年分位数; quarterly_sp_1y_percentile; 天风金工组
+7、基本面因子:季度资产周转率; quarterly_asset_turnover; 天风金工组
+8、基本面因子:季度毛利率; quarterly_gross_profit_rate; 天风金工组
+9、基本面因子:季度ROA; quarterly_roa; 天风金工组
+10、基本面因子:季度ROE; quarterly_roe; 天风金工组
+11、基本面因子:季度净利润同比增长率; quarterly_net_income_growth; 天风金工组
+12、基本面因子:季度营收同比增长率; quarterly_revenue_growth; 天风金工组
+13、基本面因子:季度ROE同比增长率; quarterly_roe_growth; 天风金工组
+14、基本面因子:标准化预期外盈利;standardized_unexpected_NI; 天风金工组
+15、基本面因子:标准化预期外收入;standardized_unexpected_revenue; 天风金工组
+16、基本面因子:股息率;dividend_ratio; 天风金工组
+17、基本面因子:业绩预告精确度;performance_forecast_accuracy; 天风金工组
+18、技术面因子:1个月换手率与均价的相关性;corr_meanprice_turnoverrate_1m; 天风金工组
+19、技术面因子:1个月日均换手率;turnover_pct_change_mean_1m; 天风金工组
+20、技术面因子:1个月换手率波动;turnover_pct_change_std_1m; 天风金工组
+21、技术面因子:1个月非流动性冲击;disliquidity_pulse_1m; 天风金工组
+22、技术面因子:Fama-French 三因子1月残差波动率;FF_residue_volatility; 天风金工组
+23、技术面因子:Fama-French 三因子1月特异度;FF_factor_specificity; 天风金工组
+24、技术面因子:1个月超额收益率波动;one_month_alpha_volatility; 天风金工组
+25、技术面因子:一年动量;one_year_momentum; 天风金工组
+26、技术面因子:1个月反转;one_month_reverse; 天风金工组
+27、技术面因子:市值;market_size; 天风金工组
