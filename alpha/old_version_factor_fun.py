@@ -30,34 +30,32 @@ rqdatac.init()
 # 指定因子名称
 #name_list = ['factor1', 'factor2']
 
-"""
-def factor_analysis_all(file_name):
-    if file_name.endswith('.py'):
-        module_name = os.path.splitext(file_name)[0]
-        module = importlib.import_module('factor.' + module_name)
-        # 构造完整的文件路径
-        pwd = os.getcwd()
-        factor_path = pwd + '/factor/'
-        # file_path = os.path.join(factor_path, file_name)
-        # 使用subprocess模块调用python解释器执行该文件
-        # function_name = filename[:-3]
-        # cmd = subprocess.call(['python', '-c', 'from '+'factor.' +'{} import {}; {}()'.format(filename[:-3], 'main', 'main')])
-        result = getattr(module, 'main')()
 
-        # output = subprocess.check_output(cmd, universal_newlines=True)
-        # result = eval(output.strip())
+def factor_analysis_selected_files(directory_name,file_name):
+    try:
+        if file_name.endswith('.py'):
+            module_name = os.path.splitext(file_name)[0]
+            module = importlib.import_module('factor.' + directory_name + '.' + module_name)
+            result = getattr(module, 'main')()
+            value_csv = output.OutputResult(pwd=pwd, factor_input=result, factor_name=file_name[:-3],
+                                            stock_pool=stock_pool, classification=directory_name).factor_value(
+                start_date=start_date, end_date=end_date)
+            if analysis == True:
+                temp = output.OutputResult(pwd=pwd, factor_input=result, factor_name=file_name[:-3],
+                                           stock_pool=stock_pool, classification=directory_name).factor_analysis(
+                    df=value_csv)
+            if summary == True:
+                temp.columns = [file_name[:-3]]
+                temp.to_excel(pwd + '/result/temp_dir/' + file_name[:-3] + '.xlsx')
 
-        value_csv = output.OutputResult(factor_input=result, factor_name=file_name[:-3]).factor_value(
-            start_date=start_date, end_date=end_date)
-        if analysis == True:
-            temp = output.OutputResult(factor_input=result, factor_name=file_name[:-3]).factor_analysis(
-                start_date=start_date, end_date=end_date, df=value_csv)
-        if summary ==True:
-            temp.columns = [file_name[:-3]]
+            print('因子 ' + file_name[:-3] + ' 已经完成')
 
-        print('因子 ' + file_name[:-3] + ' 已经完成')
-        return temp
-"""
+    except Exception:
+        print('接口错误')
+        with open(pwd + "omitted.txt", "a") as f:
+            f.write(file_name + ',')
+
+
 def main(category, factor_input, analysis, summary):
     """
     主函数，运行后得到想要的因子值或者因子分析，会生成相应的结果保存至对应文件夹
@@ -75,7 +73,6 @@ def main(category, factor_input, analysis, summary):
                 root = root[len(pwd) + 1:]
                 for fileName in files:
                     if fileName.endswith(post_fix) and fileName[:-3] == factor:
-
                         factor_full_path = (root + '/' + fileName)[:-3].replace("/", '.')
                         factor_full_path = factor_full_path.replace('\\', '.')
                         classification = factor_full_path.split('.')[1]
