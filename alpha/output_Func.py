@@ -25,7 +25,7 @@ class OutputResult():
 
         os.makedirs(pwd + '/result', exist_ok=True)
         os.makedirs(pwd + '/log', exist_ok=True)
-        os.makedirs(pwd + '/result/temp_dir', exist_ok=True)
+
         os.makedirs(pwd +'/result/' + classification, exist_ok=True)
         os.makedirs(pwd +'/result/' + classification+ '/'+factor_name + '/jpg', exist_ok=True)
         os.makedirs(pwd +'/result/'  + classification+ '/'+factor_name + '/csv', exist_ok=True)
@@ -45,7 +45,7 @@ class OutputResult():
         """
         # 此处会存在缺失值，因为股票停牌退市或者米筐无数据
         df = execute_factor(self.factor_input, self.stock_pool, start_date, end_date)
-        df.to_csv(self.pwd +'/result/' +self.classification+'/'+ self.factor_name + '/csv/'+ 'factor_value/factor_value.csv')
+        df.to_csv(self.pwd +'/result/' +self.classification+'/'+ self.factor_name + '/csv/'+ 'factor_value/'+self.factor_name+'_factor_value.csv')
         return df
 
 

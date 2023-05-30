@@ -28,7 +28,7 @@ class Run_Factor():
     把原来的部分全部封装到class中
     """
 
-    def __init__(self, category, analysis, summary):
+    def __init__(self, method,category, analysis, summary):
         """
         初始化
         """
@@ -36,8 +36,38 @@ class Run_Factor():
         self.category = category
         self.analysis = analysis
         self.summary = summary
+        self.method = method
         self.omitted = []
-        shutil.rmtree(pwd + '/result/temp_dir')
+        try:
+            shutil.rmtree(pwd + '/result/temp_dir')
+        except:
+            pass
+        os.makedirs(pwd + '/result/temp_dir', exist_ok=True)
+
+    def all_file_analysis(self, fileName):
+        try:
+            print (self.root)
+            factor_full_path = (self.root  + '/'+ fileName)
+            classification = factor_full_path.split('.')[1]
+            print(factor_full_path)
+
+            value_csv = pd.read_csv(pwd+factor_full_path,index_col = 0)
+            value_csv.index = pd.to_datetime(value_csv.index)
+            if analysis == True:
+                temp = output.OutputResult(pwd=pwd, factor_input='', factor_name=fileName[:-17], stock_pool=stock_pool,
+                                           classification=classification).factor_analysis(
+                    df=value_csv)
+            if summary == True:
+                temp.columns = [fileName[:-17]]
+                temp.to_excel(pwd + '/result/temp_dir/' + fileName[:-4] + '_temp.xlsx')
+            print('因子 ' + fileName[:-4] + ' 已经完成')
+        except Exception:
+        #    print()
+        #    self.omitted.append(fileName)
+            print('因子 '+ fileName+ ' 无法执行，请检查定义或网络连接情况')
+
+            with open(pwd + "omitted.txt", "a") as f:
+                f.write(fileName + ',')
 
     def all_file_search(self, fileName):
         try:
@@ -58,7 +88,7 @@ class Run_Factor():
                     df=value_csv)
             if summary == True:
                 temp.columns = [fileName[:-3]]
-                temp.to_excel(pwd + '/result/temp_dir/' + fileName[:-3] + '.xlsx')
+                temp.to_excel(pwd + '/result/temp_dir/' + fileName[:-3] + '_temp.xlsx')
             print('因子 ' + fileName[:-3] + ' 已经完成')
         except Exception:
         #    print()
@@ -95,7 +125,7 @@ class Run_Factor():
                         df=value_csv)
                 if self.summary == True:
                     temp.columns = [file_name[:-3]]
-                    temp.to_excel(pwd + '/result/temp_dir/' + file_name[:-3] + '.xlsx')
+                    temp.to_excel(pwd + '/result/temp_dir/' + file_name[:-3] + '_temp.xlsx')
 
                 print('因子 ' + file_name[:-3] + ' 已经完成')
 
@@ -119,96 +149,171 @@ class Run_Factor():
         主函数，运行后得到想要的因子值或者因子分析，会生成相应的结果保存至对应文件夹
         :param factor_input, list, 列表中的元素需为米筐因子: 因子列表。当为独立传入的因子时，为dataframe组成的列表，index为时间格式的日期，columns为米筐代码
         """
-        if self.category not in ['selected_factor', 'all', 'selected_files']:
-            print('category参数输入错误，请选择selected_factor或all或selected_files')
+        if self.method not in ['report_only','backtest_and_report']:
+            print ('method参数输入错误，请从report_only和backtest_and_report中选择')
+        if self.method =='report_only':
+            if self.category not in ['selected_factor', 'all', 'selected_files']:
+                print('category参数输入错误，请选择selected_factor或all或selected_files')
 
-        if self.category == 'selected_factor':
-            directory = pwd + '/factor/'
-            for factor in factor_input:
-                i = 0
-                for root, dirs, files in os.walk(directory):
-                    root = root[len(pwd) + 1:]
-                    for fileName in files:
-                        if fileName.endswith(post_fix) and fileName[:-3] == factor:
-                            factor_full_path = (root + '/' + fileName)[:-3].replace("/", '.')
-                            factor_full_path = factor_full_path.replace('\\', '.')
-                            classification = factor_full_path.split('.')[1]
-                            module = importlib.import_module(factor_full_path)
-                            result = getattr(module, 'main')()
-                            # 此处计算因子
-                            fileName = fileName[:-3]
-                            value_csv = output.OutputResult(factor_input=result, factor_name=fileName,
-                                                            stock_pool=stock_pool, pwd=pwd,
-                                                            classification=classification).factor_value(
-                                start_date=start_date, end_date=end_date)
-                            # 输入因子进行分析
-                            if analysis == True:
-                                temp = output.OutputResult(factor_input=result, factor_name=fileName,
-                                                           stock_pool=stock_pool, pwd=pwd,
-                                                           classification=classification).factor_analysis(df=value_csv)
-                            if summary == True:
-                                temp.columns = [fileName[:-3]]
-                                temp.to_excel(pwd + '/result/temp_dir/' + fileName[:-3] + '.xlsx')
-                            i += 1
-                        else:
-                            continue
-                if i == 0:
-                    print('因子 ' + factor + ' 无法找到，请检查factor文件夹')
-                else:
-                    print('因子 ' + factor + ' 已经完成')
+            if self.category == 'selected_factor':
+                directory = pwd + '/result/'
+                for factor in factor_input:
+                    i = 0
+                    for root, dirs, files in os.walk(directory):
+                        root = root[len(pwd) + 1:]
+                        for fileName in files:
+                            if fileName.endswith('_factor_value.csv') and fileName[:-17] ==factor:
+                                factor_full_path = (root + '/' + fileName)
+                                classification = factor_full_path.split('.')[1]
+                                print(factor_full_path)
+                                try:
+                                    value_csv =pd.read_csv(pwd+ factor_full_path,index_col=0)
+                                    #value_csv = value_csv.set_index('date',drop=True)
+                                    value_csv.index = pd.to_datetime(value_csv.index)
+                                except:
+                                    print('因子'+fileName[:-17]+ '净值数据不存在，请检查')
+                                    pass
+                                # 此处计算因子
+                                fileName = fileName[:-17]
+                                if analysis == True:
+                                    temp = output.OutputResult(factor_input='', factor_name=fileName,
+                                                               stock_pool=stock_pool, pwd=pwd,
+                                                               classification=classification).factor_analysis(df=value_csv)
+                                if summary == True:
+                                    temp.columns = [fileName]
+                                    temp.to_excel(pwd + '/result/temp_dir/' + fileName + '_temp.xlsx')
+                                i += 1
+                            else:
+                                continue
+                    if i == 0:
+                        print('因子 ' + factor + ' 净值无法找到，请检查factor文件夹')
+                    else:
+                        print('因子 ' + factor + ' 已经完成')
                 if summary == True:
                     generate_report.main()
 
-        if self.category == 'all':
-            directory = pwd + '/factor/'
-            for root, dirs, files in os.walk(directory):
-                root = root[len(pwd) + 1:]
-                self.root = root
-                files = [fileName for fileName in files if fileName.endswith(post_fix)]
-                if len(files) == 0:
-                    continue
-                for file in files:
-                    self.all_file_search(file)
-                # root = [root] * len(files)
-                # if __name__ == '__main__':
-                    #    pool = multiprocessing.Pool(process_number)
-                    #    for file_name in files:
-                    #        pool.apply_async(func=self.factor_analysis_selected_files, args=(file_name, root))
-                    #   pool.close()
-                    #   pool.join()
-               # with multiprocessing.Pool(process_number) as pool:
-                    # 使用map方法将列表中的每个元素平方并返回结果列表
-               #     pool.map(all_file_search, zip(files, root))
-            if summary == True:
-                generate_report.main()
 
-        if self.category == 'selected_files':
+            if self.category == 'all':
+                directory = pwd + '/result/'
+                for root, dirs, files in os.walk(directory):
+                    root = root[len(pwd) + 1:]
+                    self.root = root
+                    files = [fileName for fileName in files if fileName.endswith('_factor_value.csv')]
+                    if len(files) == 0:
+                        continue
+                    for file in files:
+                        self.all_file_analysis(file)
+                if summary == True:
+                    generate_report.main()
 
-            for directory_name in factor_input:
-                #self.directory_name = directory_name
-                factor_path = pwd + '/factor/' + directory_name
-                try:
-                    factor_list = os.listdir(factor_path)
-                except:
-                    print("文件夹 " + directory_name + ' 不存在，请检查')
-                    continue
-                # if __name__ == '__main__':
-                with open(pwd + "omitted.txt", "w") as f:
-                    f.write('')
-                    # pool = multiprocessing.Pool(process_number)
-                    # for file_name in factor_list:
-                    #    pool.apply_async(func=self.factor_analysis_selected_files, args=(file_name,directory_name,))
-                    #                    with multiprocessing.Pool(process_number) as pool:
-                    # 使用map方法将列表中的每个元素平方并返回结果列表
-                    #   pool = multiprocessing.Pool(process_number)
-                for file_name in factor_list:
-                    self.factor_analysis_selected_files(directory_name,file_name)
-                #pfunc = partial(self.factor_analysis_selected_files, directory_name)
-                # pool.map(pfunc, factor_list)
-                   #pool.close()
-                    #pool.join()
-            if summary == True:
-                generate_report.main()
+
+            if self.category =='selected_files':
+                for directory_name in factor_input:
+                    #self.directory_name = directory_name
+                    factor_path = pwd + '/result/' + directory_name
+                    for root, dirs, files in os.walk(factor_path):
+                        root = root[len(pwd) + 1:]
+                        self.root = root
+                        files = [fileName for fileName in files if fileName.endswith('_factor_value.csv')]
+                        if len(files) == 0:
+                            continue
+                        for file in files:
+                            self.all_file_analysis(file)
+                    if summary == True:
+                        generate_report.main()
+
+
+        if self.method =='backtest_and_report':
+            if self.category not in ['selected_factor', 'all', 'selected_files']:
+                print('category参数输入错误，请选择selected_factor或all或selected_files')
+
+            if self.category == 'selected_factor':
+                directory = pwd + '/factor/'
+                for factor in factor_input:
+                    i = 0
+                    for root, dirs, files in os.walk(directory):
+                        root = root[len(pwd) + 1:]
+                        for fileName in files:
+                            if fileName.endswith(post_fix) and fileName[:-3] == factor:
+                                factor_full_path = (root + '/' + fileName)[:-3].replace("/", '.')
+                                factor_full_path = factor_full_path.replace('\\', '.')
+                                classification = factor_full_path.split('.')[1]
+                                module = importlib.import_module(factor_full_path)
+                                result = getattr(module, 'main')()
+                                # 此处计算因子
+                                fileName = fileName[:-3]
+                                value_csv = output.OutputResult(factor_input=result, factor_name=fileName,
+                                                                stock_pool=stock_pool, pwd=pwd,
+                                                                classification=classification).factor_value(
+                                    start_date=start_date, end_date=end_date)
+                                # 输入因子进行分析
+                                if analysis == True:
+                                    temp = output.OutputResult(factor_input=result, factor_name=fileName,
+                                                               stock_pool=stock_pool, pwd=pwd,
+                                                               classification=classification).factor_analysis(df=value_csv)
+                                if summary == True:
+                                    temp.columns = [fileName[:-3]]
+                                    temp.to_excel(pwd + '/result/temp_dir/' + fileName[:-3] + '_temp.xlsx')
+                                i += 1
+                            else:
+                                continue
+                    if i == 0:
+                        print('因子 ' + factor + ' 无法找到，请检查factor文件夹')
+                    else:
+                        print('因子 ' + factor + ' 已经完成')
+                    if summary == True:
+                        generate_report.main()
+
+            if self.category == 'all':
+                directory = pwd + '/factor/'
+                for root, dirs, files in os.walk(directory):
+                    root = root[len(pwd) + 1:]
+                    self.root = root
+                    files = [fileName for fileName in files if fileName.endswith(post_fix)]
+                    if len(files) == 0:
+                        continue
+                    for file in files:
+                        self.all_file_search(file)
+                    # root = [root] * len(files)
+                    # if __name__ == '__main__':
+                        #    pool = multiprocessing.Pool(process_number)
+                        #    for file_name in files:
+                        #        pool.apply_async(func=self.factor_analysis_selected_files, args=(file_name, root))
+                        #   pool.close()
+                        #   pool.join()
+                   # with multiprocessing.Pool(process_number) as pool:
+                        # 使用map方法将列表中的每个元素平方并返回结果列表
+                   #     pool.map(all_file_search, zip(files, root))
+                if summary == True:
+                    generate_report.main()
+
+            if self.category == 'selected_files':
+
+                for directory_name in factor_input:
+                    #self.directory_name = directory_name
+                    factor_path = pwd + '/factor/' + directory_name
+                    try:
+                        factor_list = os.listdir(factor_path)
+                    except:
+                        print("文件夹 " + directory_name + ' 不存在，请检查')
+                        continue
+                    # if __name__ == '__main__':
+                    with open(pwd + "omitted.txt", "w") as f:
+                        f.write('')
+                        # pool = multiprocessing.Pool(process_number)
+                        # for file_name in factor_list:
+                        #    pool.apply_async(func=self.factor_analysis_selected_files, args=(file_name,directory_name,))
+                        #                    with multiprocessing.Pool(process_number) as pool:
+                        # 使用map方法将列表中的每个元素平方并返回结果列表
+                        #   pool = multiprocessing.Pool(process_number)
+                    for file_name in factor_list:
+                        self.factor_analysis_selected_files(directory_name,file_name)
+                    #pfunc = partial(self.factor_analysis_selected_files, directory_name)
+                    # pool.map(pfunc, factor_list)
+                       #pool.close()
+                        #pool.join()
+                if summary == True:
+                    generate_report.main()
 
 
 
@@ -219,6 +324,7 @@ with open(pwd + 'config.json') as f:
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--process', type=int, help='execute_method')
+parser.add_argument('--method', type=str, help='execute_method')
 parser.add_argument('--category', type=str, help='execute_method')
 parser.add_argument('--factor_input', type=str, nargs='+', help='factor_input')
 parser.add_argument("--analysis", action="store_true")
@@ -249,7 +355,7 @@ post_fix = '.py'
 # start_time = time.time()
 # main(category=args.category,factor_input=args.factor_input, analysis=analysis,summary=summary)
 
-Run_Factor(category=args.category, analysis=analysis, summary=summary).main(factor_input=args.factor_input)
+Run_Factor(method = args.method,category=args.category, analysis=analysis, summary=summary).main(factor_input=args.factor_input)
 end_time = time.time()
 print('用时为' + str(end_time - start_time) + 's')
 
