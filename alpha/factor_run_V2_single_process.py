@@ -43,13 +43,15 @@ class Run_Factor():
         except:
             pass
         os.makedirs(pwd + '/result/temp_dir', exist_ok=True)
+        with open(pwd + "omitted.txt", "w") as f:
+            f.write('')
 
     def all_file_analysis(self, fileName):
         try:
-            print (self.root)
+            #print (self.root)
             factor_full_path = (self.root  + '/'+ fileName)
             classification = factor_full_path.split('.')[1]
-            print(factor_full_path)
+            #print(factor_full_path)
 
             value_csv = pd.read_csv(pwd+factor_full_path,index_col = 0)
             value_csv.index = pd.to_datetime(value_csv.index)
@@ -71,12 +73,12 @@ class Run_Factor():
 
     def all_file_search(self, fileName):
         try:
-            print(self.root)
-            print(fileName)
+            #print(self.root)
+            #print(fileName)
             factor_full_path = (self.root  + '/'+ fileName)[:-3].replace("/", '.')
             factor_full_path = factor_full_path.replace('\\', '.')
             classification = factor_full_path.split('.')[1]
-            print(factor_full_path)
+            #print(factor_full_path)
             module = importlib.import_module(factor_full_path)
             result = getattr(module, 'main')()
             value_csv = output.OutputResult(pwd=pwd, factor_input=result, factor_name=fileName[:-3], stock_pool=stock_pool,
@@ -138,8 +140,8 @@ class Run_Factor():
         #except QuotaExceeded
             #sleep(5)
             #print(file_name[:-3])
-            self.omitted.append(file_name)
-            print(self.omitted)
+            #self.omitted.append(file_name)
+            #print(self.omitted)
 
             with open(pwd + "omitted.txt", "a") as f:
                 f.write(file_name + ',')
@@ -165,7 +167,7 @@ class Run_Factor():
                             if fileName.endswith('_factor_value.csv') and fileName[:-17] ==factor:
                                 factor_full_path = (root + '/' + fileName)
                                 classification = factor_full_path.split('.')[1]
-                                print(factor_full_path)
+                                #print(factor_full_path)
                                 try:
                                     value_csv =pd.read_csv(pwd+ factor_full_path,index_col=0)
                                     #value_csv = value_csv.set_index('date',drop=True)
@@ -187,6 +189,8 @@ class Run_Factor():
                                 continue
                     if i == 0:
                         print('因子 ' + factor + ' 净值无法找到，请检查factor文件夹')
+                        with open(pwd + "omitted.txt", "a") as f:
+                            f.write(factor + ',')
                     else:
                         print('因子 ' + factor + ' 已经完成')
                 if summary == True:
