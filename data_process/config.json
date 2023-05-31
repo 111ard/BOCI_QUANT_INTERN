@@ -2,5 +2,7 @@
  "end_date": "20230101",
 "start_time": 93000,
 "end_time":150000,
-"h5_dir_path":"D:/stock/"
+"h5_dir_path":"D:/stock/",
+"stock_pool_path":"E:/BOCI_QUANT_INTERN/data_process/stock_pool.xlsx",
+"output_dir":"E:/BOCI_QUANT_INTERN/data_process/results"
 }
