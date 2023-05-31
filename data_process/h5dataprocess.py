@@ -102,11 +102,11 @@ class Tickdata():
 
         return pd.concat(k).T
 
-
+func_name_list = ['vwap','twap']
 func_list = [Tickdata().daily_VWAP(start_time=start_time, end_time=end_time),
              Tickdata().daily_TWAP(start_time=start_time, end_time=end_time)]
 
 d = {}
-for function in func_list:
-    d['{}'.format()]=function
+for i,function in enumerate(func_list):
+    d['{}'.format(func_name_list[i])]=function
 
