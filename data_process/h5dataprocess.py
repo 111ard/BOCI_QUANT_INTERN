@@ -10,8 +10,8 @@ with open(pwd + 'config.json') as f:
 
 start_date = data['start_date']
 end_date = data['end_date']
-start_time = data['start_time']
-end_time = data['end_time']
+start_time = data['start_time']*1000
+end_time = data['end_time']*1000
 h5_dir_path = data['h5_dir_path']
 
 stock_pool = pd.read_excel(r'E:\BOCI_QUANT_INTERN\data_process\stock_pool.xlsx').证券代码.apply(lambda x: str(x).rjust(6,'0'))
@@ -27,7 +27,7 @@ for x in dirs:
 all_trading_dates = rqdatac.get_trading_dates(start_date, end_date)
 start_date = all_trading_dates[0]
 end_date = all_trading_dates[-1]
-print(all_trading_dates)
+# print(all_trading_dates)
 
 
 class Tickdata():
@@ -45,10 +45,40 @@ class Tickdata():
 
         :return:
         """
+        d = {}
+        for i in range(len(func_list)):
+            d['variable{}'.format(i)] = pd.DataFrame(columns = final, index = all_trading_dates)
         for stock in final:
-            d
+            for date in all_trading_dates:
+                try:
+                    data = pd.read_hdf(h5_dir_path + stock, key=date.strftime('%Y%m%d'))
+                except:
+                    continue
+                for i,function in enumerate(func_list):
+                    d["variable{}".format(i)].loc[date,stock] = function(data)
+                    # print(function(data))
+                # print(d)
+                # print(date)
 
-    def daily_VWAP(self,  start_time, end_time):
+        d.keys = func_name_list
+
+        return d
+
+    def daily_VWAP(self,  data):
+        """
+
+        :param start_time:
+        :param end_time:
+        :return:
+        """
+        data['volume_change'] = data.volume - data.volume.shift(1)
+        data = data.loc[(data.time >= start_time) & (data.time <= end_time),:]
+        VWAP = (data.volume_change * (data.high / 2 + data.low / 2)).sum() / data.volume_change.sum() / 10000
+
+
+        return VWAP
+
+    def daily_TWAP(self,  data):
         """
 
         :param start_time:
@@ -56,57 +86,14 @@ class Tickdata():
         :return:
         """
 
-        start_time = start_time * 1000
-        end_time = end_time * 1000
-        k = []
-        for stock in final:
-            vwap_per_stock = []
-            for date in all_trading_dates:
-                try:
-                    df = pd.read_hdf(h5_dir_path + stock, key=date.strftime('%Y%m%d'))
-                except:
-                    vwap_per_stock.append(np.nan)
-                    continue
-                df['volume_change'] = df.volume - df.volume.shift(1)
-                df = df.loc[(df.time >= start_time) & (df.time <= end_time),:]
-                VWAP = (df.volume_change * (df.high / 2 + df.low / 2)).sum() / df.volume_change.sum() / 10000
-                vwap_per_stock.append(VWAP)
-            k.append(pd.DataFrame(vwap_per_stock,columns =[stock],index = all_trading_dates).T)
+        data['volume_change'] = data.volume - data.volume.shift(1)
+        data = data.loc[(data.time >= start_time) & (data.time <= end_time),:]
+        TWAP = ((data.high/2+data.low/2)).sum()/len(data)/10000
 
-        return pd.concat(k).T
-
-    def daily_TWAP(self,  start_time, end_time):
-        """
-
-        :param start_time:
-        :param end_time:
-        :return:
-        """
-
-        start_time = start_time * 1000
-        end_time = end_time * 1000
-        k = []
-        for stock in final:
-            twap_per_stock = []
-            for date in all_trading_dates:
-                try:
-                    df = pd.read_hdf("D:\stock/"+stock, key=date.strftime('%Y%m%d'))
-                except:
-                    twap_per_stock.append(np.nan)
-                    continue
-                df['volume_change'] = df.volume - df.volume.shift(1)
-                df = df.loc[(df.time >= start_time) & (df.time <= end_time),:]
-                TWAP = ((df.high/2+df.low/2)).sum()/len(df)/10000
-                twap_per_stock.append(TWAP)
-            k.append(pd.DataFrame(twap_per_stock,columns =[stock],index = all_trading_dates).T)
-
-        return pd.concat(k).T
+        return TWAP
 
 func_name_list = ['vwap','twap']
-func_list = [Tickdata().daily_VWAP(start_time=start_time, end_time=end_time),
-             Tickdata().daily_TWAP(start_time=start_time, end_time=end_time)]
+func_list = [Tickdata().daily_VWAP,
+             Tickdata().daily_TWAP]
 
-d = {}
-for i,function in enumerate(func_list):
-    d['{}'.format(func_name_list[i])]=function
-
+test = Tickdata().data_process()
