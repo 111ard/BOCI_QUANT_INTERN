@@ -4,7 +4,9 @@ import rqdatac
 import numpy as np
 import json
 import time
+import warnings
 
+warnings.filterwarnings("ignore")
 start_time_c = time.time()
 rqdatac.init()
 pwd = os.path.abspath(__file__)[:-len(os.path.basename(__file__))]
@@ -29,8 +31,9 @@ all_stocks =[]
 for x in dirs:
     if x[0:6] in stock_pool_final:
         all_stocks.append(x)
-all_stocks = all_stocks[:1]
+# all_stocks = all_stocks[:2]
 all_trading_dates = rqdatac.get_trading_dates(start_date, end_date)
+all_trading_dates = list(map(lambda x: x.strftime(format = '%Y%m%d'),all_trading_dates))
 start_date = all_trading_dates[0]
 end_date = all_trading_dates[-1]
 # print(all_trading_dates)
@@ -54,19 +57,37 @@ class Tickdata():
         func_list = self.find_calculate_methods()
         d = {}
         for i in func_list:
-            d['variable{}'.format(i)] = pd.DataFrame(columns = all_stocks, index = all_trading_dates)
-        for stock in all_stocks:
-            for date in all_trading_dates:
-                try:
-                    data = pd.read_hdf(h5_dir_path + stock, key=date.strftime('%Y%m%d'))
-                except:
-                    continue
-                for i in func_list:
-                    d["variable{}".format(i)].loc[date,stock] =getattr(Tickdata,i)(data,data)
+            try:
+                variable_i = pd.read_csv(output_dir+ '/variable '+i+ '.csv',index_col = 0)
+                variable_i.index = variable_i.index.astype(str)
+                # print('cc')
+                d['variable {}'.format(i)] = variable_i
+                # print('ccc')
+            except:
+                d['variable {}'.format(i)] = pd.DataFrame(columns=all_stocks)#, index=all_trading_dates[0])
+
+            days_needed_to_append = list(set(all_trading_dates) - set(list(d['variable {}'.format(i)].index)))
+            if len(days_needed_to_append) ==0:
+                print(i+' 已经更新到最新')
+                continue
+            for date in days_needed_to_append:
+                temp = pd.DataFrame(index= [date],columns = all_stocks)
+                for stock in all_stocks:
+
+                #days_existed_list =
+                    try:
+                        data = pd.read_hdf(h5_dir_path + stock, key=date)
+                    except:
+                        continue
+                #for i in func_list:
+                    temp.loc[date,stock] =getattr(Tickdata,i)(data,data)
+                    # d["variable {}".format(i)].loc[date,stock] =getattr(Tickdata,i)(data,data)
+                d["variable {}".format(i)] = d["variable {}".format(i)].append(temp)
                     # print(getattr(Tickdata,i)(data,data))
         #d.keys = func_list
-        for key in list(d.keys()):
-            d[key].to_csv(output_dir + key + '.csv')
+                print(i+date+' 已经完成')
+        # for key in list(d.keys()):
+            d['variable {}'.format(i)].sort_index().to_csv(output_dir + '/' + 'variable ' + i+ '.csv')
 
         return d
 
@@ -109,3 +130,4 @@ Tickdata().data_process()
 end_time_c = time.time()
 
 print(end_time_c -start_time_c)
+
