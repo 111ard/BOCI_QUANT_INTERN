@@ -4,7 +4,6 @@ import rqdatac
 import os
 import shutil
 import pandas as pd
-import xlwings as xw
 import numpy as np
 
 
