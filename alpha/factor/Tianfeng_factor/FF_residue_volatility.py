@@ -14,14 +14,6 @@ warnings.filterwarnings("ignore")
 
 rqdatac.init()
 
-all_in = rqdatac.all_instruments()
-stock_pool = pd.read_excel('E:\BOCI_Intern/alpha\stock_pool.xlsx')
-all_in = pd.merge(stock_pool, all_in, left_on='证券名称', right_on='symbol', how='right')
-
-all_in = all_in.dropna(subset=['证券代码', '证券名称'])
-# 最终用列表储存所有的可用股票代码
-stock_pool = list(all_in['order_book_id'])
-
 
 # 一下用于计算每个交易日的三因子
 def FF_calculation_per_day(df):

@@ -20,4 +20,8 @@ ep_1Y_Percentile = UserDefinedLeafFactor('ep_1Y_percentile',ep_1y_percentile)
 #test = bp_3y_percentile(order_book_ids = ['000001.XSHE'],start_date='20230101',end_date='20230201')
 
 def main():
-    return TS_RANK(ep_1y_percentile,250)
+    return TS_RANK(ep_1Y_Percentile,250)
+
+
+
+
