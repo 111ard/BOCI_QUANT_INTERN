@@ -22,7 +22,10 @@ class OutputResult():
         self.factor_name = factor_name
         self.stock_pool = stock_pool
         # 创建文件夹
+
         os.makedirs(pwd + '/result', exist_ok=True)
+        os.makedirs(pwd + '/log', exist_ok=True)
+
         os.makedirs(pwd +'/result/' + classification, exist_ok=True)
         os.makedirs(pwd +'/result/' + classification+ '/'+factor_name + '/jpg', exist_ok=True)
         os.makedirs(pwd +'/result/'  + classification+ '/'+factor_name + '/csv', exist_ok=True)
@@ -42,7 +45,7 @@ class OutputResult():
         """
         # 此处会存在缺失值，因为股票停牌退市或者米筐无数据
         df = execute_factor(self.factor_input, self.stock_pool, start_date, end_date)
-        df.to_csv(self.pwd +'/result/' +self.classification+'/'+ self.factor_name + '/csv/'+ 'factor_value/factor_value.csv')
+        df.to_csv(self.pwd +'/result/' +self.classification+'/'+ self.factor_name + '/csv/'+ 'factor_value/'+self.factor_name+'_factor_value.csv')
         return df
 
 
@@ -155,8 +158,19 @@ class OutputResult():
 
         return final
 
-
+    def generate_report(self):
+        df = []
+        temp_path = self.pwd + '/result/temp_dir'
+        temp_list = os.listdir(temp_path)
+        for report_unique in temp_list:
+            temp = pd.read_excel(temp_path + '/' + report_unique).T
+            df.append(temp)
+        df = pd.concat(df).T
+        df = df.T.drop_duplicates()
+        df = df.T.set_index('Unnamed: 0', drop=True)
+        df.to_excel(self.pwd + '/result/summary.xlsx')
 
     def main(self, start_date, end_date, df):
         self.factor_value(start_date, end_date)
         self.factor_analysis(start_date, end_date, df)
+        self.generate_report()
