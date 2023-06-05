@@ -48,10 +48,10 @@ class Run_Factor():
 
     def all_file_analysis(self, fileName):
         try:
-            #print (self.root)
+            # print (self.root)
             factor_full_path = (self.root  + '/'+ fileName)
             classification = factor_full_path.split('.')[1]
-            #print(factor_full_path)
+            # print(factor_full_path)
 
             value_csv = pd.read_csv(pwd+factor_full_path,index_col = 0)
             value_csv.index = pd.to_datetime(value_csv.index)
