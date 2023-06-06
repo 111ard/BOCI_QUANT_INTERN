@@ -73,7 +73,7 @@ class Tickdata():
         for i in func_list:
             try:
                 variable_i = pd.read_csv(os.path.join(output_dir , 'variable_' + i + '.csv'), index_col=0)
-                variable_i = variable_i.iloc[:-1,:]
+                variable_i = variable_i.iloc[:-1]
                 variable_i.index = variable_i.index.astype(str)
                 d['variable {}'.format(i)] = variable_i
             except:
@@ -96,6 +96,8 @@ class Tickdata():
                     logging.info(i+' '+ date+' '+stock+ ' 已经完成')
         for i in func_list:
             d['variable {}'.format(i)].sort_index().to_csv(os.path.join(output_dir ,  'variable_'  +i + '.csv'))
+
+        self.UpDownLimitCount(pd.read_csv(os.path.join(output_dir ,  'variable_calculate_UpDownLimitClose.csv'),index_col = 0)).to_csv(os.path.join(output_dir ,  'variable_UpDownLimitCount.csv'))
 
     def find_calculate_methods(self):
         return (
@@ -129,9 +131,51 @@ class Tickdata():
 
         return TWAP
 
-    def calculate_
+    def calculate_UpDownLimitStatus(self, data):
+        data = data.loc[~data.time.isin([91500000, 145700000])]
+        data = data.loc[(data.time >= start_time) & (data.time <= end_time), :]
+        if len(data.loc[data.a1 == 0, :]) >= 1:
+            return 1
+        if len(data.loc[data.b1 == 0, :]) >= 1:
+            return -1
+        if len(data.loc[data.a1 == 0, :]) >= 1 and len(data.loc[data.b1 == 0, :]) >= 1:
+            return 0
+        else:
+            return 0
+
+    def calculate_UpDownLimitSpan(self, data):
+        data = data.loc[~data.time.isin([91500000, 145700000])]
+        data = data.loc[(data.time >= start_time) & (data.time <= end_time), :]
+        if len(data.loc[data.a1 == 0, :]) >= 1:
+            return len(data.loc[data.a1 == 0, :]) / len(data)
+        if len(data.loc[data.b1 == 0, :]) >= 1:
+            return len(data.loc[data.b1 == 0, :]) / len(data)
+        else:
+            return 0
+
+    def calculate_UpDownLimitClose(self, data):
+        data = data.loc[~data.time.isin([91500000, 145700000])]
+        data = data.loc[(data.time >= start_time) & (data.time <= end_time), :]
+        if len(data.loc[data.a1 == 0, :]) >= 1 and data.iloc[-1]['a1'] == 0:
+            return 2
+        if len(data.loc[data.a1 == 0, :]) >= 1 and data.iloc[-1]['a1'] != 0:
+            return 1
+        if len(data.loc[data.b1 == 0, :]) >= 1 and data.iloc[-1]['b1'] == 0:
+            return -2
+        if len(data.loc[data.b1 == 0, :]) >= 1 and data.iloc[-1]['b1'] != 0:
+            return -1
+        # else:
+        #     return 0
+
+    def UpDownLimitCount(self,data):
+        data = data.replace([-2, -1, 1, 2], 1)
+        return data.cumsum()
+
+
 Tickdata().data_process()
 end_time_c = time.time()
+# Tickdata().UpDownLimitCount(pd.read_csv(os.path.join(output_dir, 'variable_calculate_UpDownLimitClose.csv')),
+#                       index_col=0).to_csv(os.path.join(output_dir, 'variable_UpDownLimitCount.csv'))
 
 print(end_time_c - start_time_c)
 
