@@ -81,7 +81,7 @@ class Tickdata():
 
             days_needed_to_append_temp = list(set(all_trading_dates) - set(list(d['variable {}'.format(i)].index)))
             if len(days_needed_to_append_temp) == 0:
-                print(i + ' 已经更新到最新')
+                logging.info(i + ' 已经更新到最新')
             days_needed_to_append += days_needed_to_append_temp
         days_needed_to_append = list(set(days_needed_to_append))
 
@@ -129,7 +129,7 @@ class Tickdata():
 
         return TWAP
 
-
+    def calculate_
 Tickdata().data_process()
 end_time_c = time.time()
 
