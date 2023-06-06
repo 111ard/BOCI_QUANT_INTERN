@@ -43,9 +43,11 @@ class OutputResult():
         :return: factorValue, DataFrame: 因子值，索引为日期，列名为因子
         """
         # 此处会存在缺失值，因为股票停牌退市或者米筐无数据
+
         df = execute_factor(self.factor_input, self.stock_pool, start_date, end_date)
         df.to_csv(self.pwd +'/result/' +self.classification+'/'+ self.factor_name + '/csv/'+ 'factor_value/'+self.factor_name+'_factor_value.csv')
         return df
+
 
 
 
