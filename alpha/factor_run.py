@@ -17,11 +17,18 @@ import json
 from functools import partial
 from time import sleep
 import generate_report
-
+import logging
 
 start_time = time.time()
 warnings.filterwarnings("ignore")
 rqdatac.init()
+logging.basicConfig(level=logging.DEBUG #设置日志输出格式
+                    ,filename="BOCI_QUANT_INTERN/data_process/log/demo.log" #log日志输出的文件位置和文件名
+                    ,filemode="w" #文件的写入格式，w为重新写入文件，默认是追加
+                    ,format="%(asctime)s - %(name)s - %(levelname)-9s - %(filename)-8s : %(lineno)s line - %(message)s" #日志输出的格式
+                    # -8表示占位符，让输出左对齐，输出长度都为8位
+                    ,datefmt="%Y-%m-%d %H:%M:%S" #时间输出的格式
+                    )
 
 
 class Run_Factor():
@@ -60,14 +67,17 @@ class Run_Factor():
             if summary == True:
                 temp.columns = [fileName[:-17]]
                 temp.to_excel(pwd + '/result/temp_dir/' + fileName[:-4] + '_temp.xlsx')
-            print('因子 ' + fileName[:-4] + ' 已经完成')
+            logging.info('因子 ' + fileName[:-4] + ' 已经完成')
+            # print('因子 ' + fileName[:-4] + ' 已经完成')
         except Exception:
-            print('因子 '+ fileName+ ' 无法执行，请检查定义或网络连接情况')
+            logging.info('因子 '+ fileName+ ' 无法执行，请检查定义或网络连接情况')
+            # print('因子 '+ fileName+ ' 无法执行，请检查定义或网络连接情况')
 
             with open(pwd + "omitted.txt", "a") as f:
                 f.write(fileName + ',')
         except (AttributeError):
-            print('因子 ' + fileName +  ' 返回值为空')
+            logging.info('因子 ' + fileName +  ' 返回值为空')
+            # print('因子 ' + fileName +  ' 返回值为空')
             pass
             with open(pwd + "omitted.txt", "a") as f:
                 f.write(fileName + ',')
@@ -81,16 +91,19 @@ class Run_Factor():
             result = getattr(module, 'main')()
             try:
                 value_csv = pd.read_csv(os.path.join(pwd, result,classification, fileName[:-3],'csv','factor_value',fileName+'_factor_value.csv' ),index_col = 0)
+                logging.info(fileName[:-3] + '已经存在，已读取')
                 date_needed_append_start = value_csv.index[-1]
                 value_csv = pd.concat(value_csv, output.OutputResult(pwd=pwd, factor_input=result, factor_name=fileName[:-3], stock_pool=stock_pool,
                                                 classification=classification).factor_value(
                     start_date=date_needed_append_start, end_date=end_date).iloc[1:])
                 value_csv.to_csv(os.path.join(pwd, 'result',classification, fileName[:-3],'csv','factor_value',fileName[:-3]+'_factor_value.csv' ))
+                logging.info(fileName[:-3] + '已经完成并输出')
             except:
-
+                logging.info(fileName[:-3] +'不存在，从起始日期开始计算')
                 value_csv = output.OutputResult(pwd=pwd, factor_input=result, factor_name=fileName[:-3], stock_pool=stock_pool,
                                                 classification=classification).factor_value(
                     start_date=start_date, end_date=end_date)
+                logging.info(fileName[:-3] + '已经完成并输出')
             if analysis == True:
                 temp = output.OutputResult(pwd=pwd, factor_input=result, factor_name=fileName[:-3], stock_pool=stock_pool,
                                            classification=classification).factor_analysis(
@@ -98,14 +111,16 @@ class Run_Factor():
             if summary == True:
                 temp.columns = [fileName[:-3]]
                 temp.to_excel(pwd + '/result/temp_dir/' + fileName[:-3] + '_temp.xlsx')
-            print('因子 ' + fileName[:-3] + ' 已经完成')
+            # print('因子 ' + fileName[:-3] + ' 已经完成')
         except Exception:
-            print('因子 '+ fileName+ ' 无法执行，请检查定义或网络连接情况')
+            logging.info(fileName[:-3] + '无法执行，请检查定义或网络连接情况')
+            #print('因子 '+ fileName+ ' 无法执行，请检查定义或网络连接情况')
 
             with open(pwd + "omitted.txt", "a") as f:
                 f.write(fileName + ',')
         except (AttributeError):
-            print('因子 ' + fileName[:-3] +  ' 返回值为空')
+            logging.info(fileName[:-3] + '返回值为空')
+            # print('因子 ' + fileName[:-3] +  ' 返回值为空')
             pass
             with open(pwd + "omitted.txt", "a") as f:
                 f.write(fileName[:-3] + ',')
@@ -120,7 +135,9 @@ class Run_Factor():
                 module = importlib.import_module('factor.' + directory_name + '.' + module_name)
                 result = getattr(module, 'main')()
                 try:
+
                     value_csv = pd.read_csv(os.path.join(pwd, 'result',directory_name, file_name[:-3],'csv','factor_value',file_name[:-3]+'_factor_value.csv' ),index_col = 0)
+                    logging.info(file_name[:-3] + '已经存在，已读取')
                     date_needed_append_start = value_csv.index[-1]
                     value_csv = value_csv.append(value_csv,
                                           output.OutputResult(pwd=pwd, factor_input=result, factor_name=file_name[:-3],
@@ -128,10 +145,13 @@ class Run_Factor():
                                                               classification=directory_name).factor_value(
                                               start_date=date_needed_append_start, end_date=end_date).iloc[1:])
                     value_csv.to_csv(os.path.join(pwd, 'result',directory_name, file_name[:-3],'csv','factor_value',file_name[:-3]+'_factor_value.csv' ))
+                    logging.info(file_name[:-3] + '已经完成并输出')
                 except:
+                    logging.info(file_name[:-3] + '不存在，从起始日期开始计算')
                     value_csv = output.OutputResult(pwd=pwd, factor_input=result, factor_name=file_name[:-3],
                                                 stock_pool=stock_pool, classification=directory_name).factor_value(
                         start_date=start_date, end_date=end_date)
+                    logging.info(file_name[:-3] +'已经完成并输出')
                 if self.analysis == True:
                     temp = output.OutputResult(pwd=pwd, factor_input=result, factor_name=file_name[:-3],
                                                stock_pool=stock_pool, classification=directory_name).factor_analysis(
@@ -140,15 +160,17 @@ class Run_Factor():
                     temp.columns = [file_name[:-3]]
                     temp.to_excel(pwd + '/result/temp_dir/' + file_name[:-3] + '_temp.xlsx')
 
-                print('因子 ' + file_name[:-3] + ' 已经完成')
+                # print('因子 ' + file_name[:-3] + ' 已经完成')
 
         except Exception:
             pass
-            print('因子 '+ file_name+ ' 无法执行，请检查定义或网络连接情况')
+            logging.info('因子 '+ file_name+ ' 无法执行，请检查定义或网络连接情况')
+ #           print('因子 '+ file_name+ ' 无法执行，请检查定义或网络连接情况')
             with open(pwd + "omitted.txt", "a") as f:
                 f.write(file_name + ',')
         except (AttributeError):
-            print('因子 ' + file_name +  ' 返回值为空')
+            # print('因子 ' + file_name +  ' 返回值为空')
+            logging.info('因子 ' + file_name +  ' 返回值为空')
             pass
             with open(pwd + "omitted.txt", "a") as f:
                 f.write(file_name + ',')
@@ -177,9 +199,12 @@ class Run_Factor():
                                 classification = factor_full_path.split('.')[1]
                                 try:
                                     value_csv =pd.read_csv(pwd+ factor_full_path,index_col=0)
+                                    logging.info(fileName[:-17] + '已经存在，已读取')
                                     value_csv.index = pd.to_datetime(value_csv.index)
+
                                 except:
-                                    print('因子'+fileName[:-17]+ '净值数据不存在，请检查')
+                                    logging.info('因子'+fileName[:-17]+ '净值数据不存在，请检查')
+                                    # print('因子'+fileName[:-17]+ '净值数据不存在，请检查')
                                     pass
                                 # 此处计算因子
                                 fileName = fileName[:-17]
@@ -194,11 +219,13 @@ class Run_Factor():
                             else:
                                 continue
                     if i == 0:
-                        print('因子 ' + factor + ' 净值无法找到，请检查factor文件夹')
+                        logging.info('因子 ' + factor + ' 净值无法找到，请检查factor文件夹')
+
                         with open(pwd + "omitted.txt", "a") as f:
                             f.write(factor + ',')
                     else:
-                        print('因子 ' + factor + ' 已经完成')
+                        logging.info('因子 ' + factor + ' 已经完成')
+
 
             if self.category == 'all':
                 classification_summary = 'all'
@@ -250,18 +277,22 @@ class Run_Factor():
                                 fileName = fileName[:-3]
                                 try:
                                     value_csv = pd.read_csv(os.path.join(pwd, 'result',classification, factor,'csv','factor_value',fileName+'_factor_value.csv' ),index_col = 0)
+                                    logging.info(fileName + '已经存在，已读取')
                                     dates_updated_start =value_csv.index[-1]
                                     value_csv = value_csv.append( output.OutputResult(factor_input=result, factor_name=fileName,
                                                                     stock_pool=stock_pool, pwd=pwd,
                                                                     classification=classification).factor_value(
                                         start_date=dates_updated_start, end_date=end_date).iloc[1:])
                                     value_csv.to_csv(os.path.join(pwd, 'result',classification, factor,'csv','factor_value',fileName+'_factor_value.csv' ))
+                                    logging.info('因子 ' + fileName + ' 已经完成')
                                 except:
+                                    logging.info(fileName + '不存在，从起始日期开始计算')
                                     value_csv = output.OutputResult(factor_input=result, factor_name=fileName,
                                                                     stock_pool=stock_pool, pwd=pwd,
                                                                     classification=classification).factor_value(
                                         start_date=start_date, end_date=end_date)
                                     # 输入因子进行分析
+                                    logging.info('因子 ' + fileName + ' 已经完成')
                                 if analysis == True:
                                     temp = output.OutputResult(factor_input=result, factor_name=fileName,
                                                                stock_pool=stock_pool, pwd=pwd,
@@ -275,9 +306,11 @@ class Run_Factor():
                             else:
                                 continue
                     if i == 0:
-                        print('因子 ' + factor + ' 无法找到或返回值为空，请检查factor文件夹')
+                        logging.info('因子 ' + factor + ' 无法找到或返回值为空，请检查factor文件夹')
+                        # print('因子 ' + factor + ' 无法找到或返回值为空，请检查factor文件夹')
                     else:
-                        print('因子 ' + factor + ' 已经完成')
+                        logging.info('因子 ' + factor + ' 已经完成')
+                        # print('因子 ' + factor + ' 已经完成')
 
 
             if self.category == 'all':
@@ -301,7 +334,8 @@ class Run_Factor():
                     try:
                         factor_list = os.listdir(factor_path)
                     except:
-                        print("文件夹 " + directory_name + ' 不存在，请检查')
+                        logging.info("文件夹 " + directory_name + ' 不存在，请检查')
+                        # print("文件夹 " + directory_name + ' 不存在，请检查')
                         continue
                     with open(pwd + "omitted.txt", "w") as f:
                         f.write('')
@@ -357,5 +391,6 @@ post_fix = '.py'
 
 Run_Factor(method = args.method,category=args.category, analysis=analysis, summary=summary).main(factor_input=args.factor_input)
 end_time = time.time()
-print('用时为' + str(end_time - start_time) + 's')
+logging.info('用时为' + str(end_time - start_time) + 's')
+# print('用时为' + str(end_time - start_time) + 's')
 
