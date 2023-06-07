@@ -168,7 +168,7 @@ class Tickdata():
 
         return TWAP
 
-    def calculate_TWAP(self, data):
+    def calculate_TWAP_15m(self, data):
         """
 
         :param start_time:
