@@ -47,10 +47,10 @@ class Run_Factor():
         self.method = method
         self.omitted = []
         try:
-            shutil.rmtree(os.path.join(pwd , '/result/temp_dir'))
+            shutil.rmtree(os.path.join(pwd , 'result/temp_dir'))
         except:
             pass
-        os.makedirs(os.path.join(pwd , '/result/temp_dir'), exist_ok=True)
+        os.makedirs(os.path.join(pwd , 'result/temp_dir'), exist_ok=True)
         with open(os.path.join(pwd , "omitted.txt"), "w") as f:
             f.write('')
 
@@ -66,20 +66,20 @@ class Run_Factor():
                     df=value_csv)
             if summary == True:
                 temp.columns = [fileName[:-17]]
-                temp.to_excel(pwd + '/result/temp_dir/' + fileName[:-4] + '_temp.xlsx')
+                temp.to_excel(os.path.join(pwd , 'result/temp_dir/' , fileName[:-4] + '_temp.xlsx'))
             logging.info('因子 ' + fileName[:-4] + ' 已经完成')
             # print('因子 ' + fileName[:-4] + ' 已经完成')
         except Exception:
             logging.info('因子 '+ fileName+ ' 无法执行，请检查定义或网络连接情况')
             # print('因子 '+ fileName+ ' 无法执行，请检查定义或网络连接情况')
 
-            with open(pwd + "omitted.txt", "a") as f:
+            with open(os.path.join(pwd , "omitted.txt"), "a") as f:
                 f.write(fileName + ',')
         except (AttributeError):
             logging.info('因子 ' + fileName +  ' 返回值为空')
             # print('因子 ' + fileName +  ' 返回值为空')
             pass
-            with open(pwd + "omitted.txt", "a") as f:
+            with open(os.path.join(pwd , "omitted.txt"), "a") as f:
                 f.write(fileName + ',')
 
     def all_file_search(self, fileName, classification):
@@ -110,19 +110,19 @@ class Run_Factor():
                     df=value_csv)
             if summary == True:
                 temp.columns = [fileName[:-3]]
-                temp.to_excel(pwd + '/result/temp_dir/' + fileName[:-3] + '_temp.xlsx')
+                temp.to_excel(os.path.join(pwd , 'result/temp_dir/' , fileName[:-3] + '_temp.xlsx'))
             # print('因子 ' + fileName[:-3] + ' 已经完成')
         except Exception:
             logging.info(fileName[:-3] + '无法执行，请检查定义或网络连接情况')
             #print('因子 '+ fileName+ ' 无法执行，请检查定义或网络连接情况')
 
-            with open(pwd + "omitted.txt", "a") as f:
+            with open(os.path.join(pwd , "omitted.txt"), "a") as f:
                 f.write(fileName + ',')
         except (AttributeError):
             logging.info(fileName[:-3] + '返回值为空')
             # print('因子 ' + fileName[:-3] +  ' 返回值为空')
             pass
-            with open(pwd + "omitted.txt", "a") as f:
+            with open(os.path.join(pwd , "omitted.txt"), "a") as f:
                 f.write(fileName[:-3] + ',')
 
     def factor_analysis_selected_files(self, directory_name,file_name):
@@ -158,7 +158,7 @@ class Run_Factor():
                         df=value_csv)
                 if self.summary == True:
                     temp.columns = [file_name[:-3]]
-                    temp.to_excel(pwd + '/result/temp_dir/' + file_name[:-3] + '_temp.xlsx')
+                    temp.to_excel(os.path.join(pwd , 'result/temp_dir/' , file_name[:-3] + '_temp.xlsx'))
 
                 # print('因子 ' + file_name[:-3] + ' 已经完成')
 
@@ -166,13 +166,13 @@ class Run_Factor():
             pass
             logging.info('因子 '+ file_name+ ' 无法执行，请检查定义或网络连接情况')
  #           print('因子 '+ file_name+ ' 无法执行，请检查定义或网络连接情况')
-            with open(pwd + "omitted.txt", "a") as f:
+            with open(os.path.join(pwd , "omitted.txt"), "a") as f:
                 f.write(file_name + ',')
         except (AttributeError):
             # print('因子 ' + file_name +  ' 返回值为空')
             logging.info('因子 ' + file_name +  ' 返回值为空')
             pass
-            with open(pwd + "omitted.txt", "a") as f:
+            with open(os.path.join(pwd , "omitted.txt"), "a") as f:
                 f.write(file_name + ',')
 
     def main(self, factor_input):
@@ -188,17 +188,17 @@ class Run_Factor():
 
             if self.category == 'selected_factor':
                 classification_summary = '_'.join(factor_input)
-                directory = pwd + '/result/'
+                directory = os.path.join(pwd , 'result/')
                 for factor in factor_input:
                     i = 0
                     for root, dirs, files in os.walk(directory):
                         root = root[len(pwd) + 1:]
                         for fileName in files:
                             if fileName.endswith('_factor_value.csv') and fileName[:-17] ==factor:
-                                factor_full_path = (root + '/' + fileName)
+                                factor_full_path = os.path.join(root, fileName)
                                 classification = factor_full_path.split('.')[1]
                                 try:
-                                    value_csv =pd.read_csv(pwd+ factor_full_path,index_col=0)
+                                    value_csv =pd.read_csv(os.path.join(pwd, factor_full_path),index_col=0)
                                     logging.info(fileName[:-17] + '已经存在，已读取')
                                     value_csv.index = pd.to_datetime(value_csv.index)
 
@@ -208,20 +208,20 @@ class Run_Factor():
                                     pass
                                 # 此处计算因子
                                 fileName = fileName[:-17]
-                                if analysis == True:
+                                if analysis:
                                     temp = output.OutputResult(factor_input=value_csv, factor_name=fileName,
                                                                stock_pool=stock_pool, pwd=pwd,
                                                                classification=classification).factor_analysis(df=value_csv)
-                                if summary == True:
+                                if summary:
                                     temp.columns = [fileName]
-                                    temp.to_excel(pwd + '/result/temp_dir/' + fileName + '_temp.xlsx')
+                                    temp.to_excel(os.path.join(pwd , 'result/temp_dir/' , fileName + '_temp.xlsx'))
                                 i += 1
                             else:
                                 continue
                     if i == 0:
                         logging.info('因子 ' + factor + ' 净值无法找到，请检查factor文件夹')
 
-                        with open(pwd + "omitted.txt", "a") as f:
+                        with open(os.path.join(pwd , "omitted.txt"), "a") as f:
                             f.write(factor + ',')
                     else:
                         logging.info('因子 ' + factor + ' 已经完成')
@@ -229,7 +229,7 @@ class Run_Factor():
 
             if self.category == 'all':
                 classification_summary = 'all'
-                directory = pwd + '/result/'
+                directory = os.path.join(pwd , 'result/')
                 for root, dirs, files in os.walk(directory):
                     root = root[len(pwd) + 1:]
                     self.root = root
@@ -242,7 +242,7 @@ class Run_Factor():
             if self.category =='selected_files':
                 classification_summary = '_'.join(factor_input)
                 for directory_name in factor_input:
-                    factor_path = pwd + '/result/' + directory_name
+                    factor_path = os.path.join(pwd , 'result/' , directory_name)
                     for root, dirs, files in os.walk(factor_path):
                         root = root[len(pwd) + 1:]
                         self.root = root
@@ -260,7 +260,7 @@ class Run_Factor():
 
             if self.category == 'selected_factor':
                 classification_summary = '_'.join(factor_input)
-                directory = pwd + '/factor/'
+                directory = os.path.join(pwd , 'factor/')
                 for factor in factor_input:
 
                     i = 0
@@ -293,13 +293,13 @@ class Run_Factor():
                                         start_date=start_date, end_date=end_date)
                                     # 输入因子进行分析
                                     logging.info('因子 ' + fileName + ' 已经完成')
-                                if analysis == True:
+                                if analysis:
                                     temp = output.OutputResult(factor_input=result, factor_name=fileName,
                                                                stock_pool=stock_pool, pwd=pwd,
                                                                classification=classification).factor_analysis(df=value_csv)
-                                if summary == True:
+                                if summary:
                                     temp.columns = [fileName[:-3]]
-                                    temp.to_excel(pwd + '/result/temp_dir/' + fileName[:-3] + '_temp.xlsx')
+                                    temp.to_excel(os.path.join(pwd , 'result/temp_dir/' , fileName[:-3] + '_temp.xlsx'))
                                 i += 1
                                 # finally:
                                 #     pass
@@ -314,7 +314,7 @@ class Run_Factor():
 
 
             if self.category == 'all':
-                directory = pwd + '/factor/'
+                directory =os.path.join( pwd , 'factor/')
                 for root, dirs, files in os.walk(directory):
                     root = root[len(pwd) + 1:]
                     self.root = root
@@ -330,14 +330,14 @@ class Run_Factor():
 
             if self.category == 'selected_files':
                 for directory_name in factor_input:
-                    factor_path = pwd + '/factor/' + directory_name
+                    factor_path = os.path.join(pwd ,'factor/' , directory_name)
                     try:
                         factor_list = os.listdir(factor_path)
                     except:
                         logging.info("文件夹 " + directory_name + ' 不存在，请检查')
                         # print("文件夹 " + directory_name + ' 不存在，请检查')
                         continue
-                    with open(pwd + "omitted.txt", "w") as f:
+                    with open(os.path.join(pwd , "omitted.txt"), "w") as f:
                         f.write('')
                     for file_name in factor_list:
                         self.factor_analysis_selected_files(directory_name,file_name)
