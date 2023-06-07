@@ -117,6 +117,31 @@ class Tickdata():
 
         return VWAP
 
+    def calculate_VWAP_10min(self, data):
+        """
+
+        :param start_time:
+        :param end_time:
+        :return:
+        """
+        data['volume_change'] = data.volume - data.volume.shift(1)
+        data = data.loc[(data.time >= start_time) & (data.time <= 94000), :]
+        VWAP = (data.volume_change * (data.high / 2 + data.low / 2)).sum() / data.volume_change.sum() / 10000
+
+        return VWAP
+    def calculate_VWAP_15m(self, data):
+        """
+
+        :param start_time:
+        :param end_time:
+        :return:
+        """
+        data['volume_change'] = data.volume - data.volume.shift(1)
+        data = data.loc[(data.time >= start_time) & (data.time <= 94500), :]
+        VWAP = (data.volume_change * (data.high / 2 + data.low / 2)).sum() / data.volume_change.sum() / 10000
+
+        return VWAP
+
     def calculate_TWAP(self, data):
         """
 
@@ -130,6 +155,31 @@ class Tickdata():
 
         return TWAP
 
+    def calculate_TWAP_10m(self, data):
+        """
+
+        :param start_time:
+        :param end_time:
+        :return:
+        """
+
+        data = data.loc[(data.time >= start_time) & (data.time <= 94000), :]
+        TWAP = ((data.high / 2 + data.low / 2)).sum() / len(data) / 10000
+
+        return TWAP
+
+    def calculate_TWAP(self, data):
+        """
+
+        :param start_time:
+        :param end_time:
+        :return:
+        """
+
+        data = data.loc[(data.time >= start_time) & (data.time <= 94500), :]
+        TWAP = ((data.high / 2 + data.low / 2)).sum() / len(data) / 10000
+
+        return TWAP
     def calculate_UpDownLimitStatus(self, data):
         data = data.loc[~data.time.isin([91500000, 145700000])]
         data = data.loc[(data.time >= start_time) & (data.time <= end_time), :]
