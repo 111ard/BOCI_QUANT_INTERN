@@ -22,15 +22,20 @@ import logging
 start_time = time.time()
 warnings.filterwarnings("ignore")
 rqdatac.init()
+root_logger = logging.getLogger()
+for h in root_logger.handlers:
+    root_logger.removeHandler(h)
 logging.basicConfig(level=logging.DEBUG #设置日志输出格式
-                    ,filename="BOCI_QUANT_INTERN/alpha/log/demo.log" #log日志输出的文件位置和文件名
+                    ,filename="BOCI_QUANT_INTERN/alpha/log/demo1.log" #log日志输出的文件位置和文件名
                     ,filemode="w" #文件的写入格式，w为重新写入文件，默认是追加
                     ,format="%(asctime)s - %(name)s - %(levelname)-9s - %(filename)-8s : %(lineno)s line - %(message)s" #日志输出的格式
                     # -8表示占位符，让输出左对齐，输出长度都为8位
                     ,datefmt="%Y-%m-%d %H:%M:%S" #时间输出的格式
                     )
-
-
+#logging.FileHandler('E:/BOCI_QUANT_INTERN/alpha/log/demo.log','w')
+logging.getLogger().setLevel(logging.INFO)
+logging.StreamHandler()
+logging.info('开始了')
 class Run_Factor():
     """
     把原来的部分全部封装到class中
@@ -93,11 +98,12 @@ class Run_Factor():
                 value_csv = pd.read_csv(os.path.join(pwd, result,classification, fileName[:-3],'csv','factor_value',fileName+'_factor_value.csv' ),index_col = 0)
                 logging.info(fileName[:-3] + '已经存在，已读取')
                 date_needed_append_start = value_csv.index[-1]
-                value_csv = pd.concat(value_csv, output.OutputResult(pwd=pwd, factor_input=result, factor_name=fileName[:-3], stock_pool=stock_pool,
+
+                value_csv = value_csv.iloc[:-1].append(output.OutputResult(pwd=pwd, factor_input=result, factor_name=fileName[:-3], stock_pool=stock_pool,
                                                 classification=classification).factor_value(
-                    start_date=date_needed_append_start, end_date=end_date).iloc[1:])
-                value_csv.to_csv(os.path.join(pwd, 'result',classification, fileName[:-3],'csv','factor_value',fileName[:-3]+'_factor_value.csv' ))
+                    start_date=date_needed_append_start, end_date=end_date))
                 logging.info(fileName[:-3] + '已经完成并输出')
+                value_csv.to_csv(os.path.join(pwd, 'result',classification, fileName[:-3],'csv','factor_value',fileName[:-3]+'_factor_value.csv' ))
             except:
                 logging.info(fileName[:-3] +'不存在，从起始日期开始计算')
                 value_csv = output.OutputResult(pwd=pwd, factor_input=result, factor_name=fileName[:-3], stock_pool=stock_pool,
@@ -130,7 +136,7 @@ class Run_Factor():
         try:
             if file_name.endswith('.py'):
 
-                module_name = os.path.splitext(file_name)[0]
+                module_name = file_name[:-3]
 
                 module = importlib.import_module('factor.' + directory_name + '.' + module_name)
                 result = getattr(module, 'main')()
@@ -139,13 +145,14 @@ class Run_Factor():
                     value_csv = pd.read_csv(os.path.join(pwd, 'result',directory_name, file_name[:-3],'csv','factor_value',file_name[:-3]+'_factor_value.csv' ),index_col = 0)
                     logging.info(file_name[:-3] + '已经存在，已读取')
                     date_needed_append_start = value_csv.index[-1]
-                    value_csv = value_csv.append(value_csv,
-                                          output.OutputResult(pwd=pwd, factor_input=result, factor_name=file_name[:-3],
-                                                              stock_pool=stock_pool,
-                                                              classification=directory_name).factor_value(
-                                              start_date=date_needed_append_start, end_date=end_date).iloc[1:])
-                    value_csv.to_csv(os.path.join(pwd, 'result',directory_name, file_name[:-3],'csv','factor_value',file_name[:-3]+'_factor_value.csv' ))
+                    #logging.info(str(date_needed_append_start))
+                    value_csv = value_csv.append(
+                        output.OutputResult(pwd=pwd, factor_input=result, factor_name=file_name[:-3],
+                                            stock_pool=stock_pool,
+                                            classification=directory_name).factor_value(
+                            start_date=date_needed_append_start, end_date=end_date))
                     logging.info(file_name[:-3] + '已经完成并输出')
+                    value_csv.to_csv(os.path.join(pwd, 'result',directory_name, file_name[:-3],'csv','factor_value',file_name[:-3]+'_factor_value.csv' ))
                 except:
                     logging.info(file_name[:-3] + '不存在，从起始日期开始计算')
                     value_csv = output.OutputResult(pwd=pwd, factor_input=result, factor_name=file_name[:-3],
