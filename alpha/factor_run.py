@@ -72,16 +72,25 @@ class Run_Factor():
             with open(pwd + "omitted.txt", "a") as f:
                 f.write(fileName + ',')
 
-    def all_file_search(self, fileName):
+    def all_file_search(self, fileName, classification):
         try:
-            factor_full_path = (self.root  + '/'+ fileName)[:-3].replace("/", '.')
+            factor_full_path = (self.root + '/' + fileName)[:-3].replace("/", '.')
             factor_full_path = factor_full_path.replace('\\', '.')
             classification = factor_full_path.split('.')[1]
             module = importlib.import_module(factor_full_path)
             result = getattr(module, 'main')()
-            value_csv = output.OutputResult(pwd=pwd, factor_input=result, factor_name=fileName[:-3], stock_pool=stock_pool,
-                                            classification=classification).factor_value(
-                start_date=start_date, end_date=end_date)
+            try:
+                value_csv = pd.read_csv(os.path.join(pwd, result,classification, fileName[:-3],'csv','factor_value',fileName+'_factor_value.csv' ),index_col = 0)
+                date_needed_append_start = value_csv.index[-1]
+                value_csv = pd.concat(value_csv, output.OutputResult(pwd=pwd, factor_input=result, factor_name=fileName[:-3], stock_pool=stock_pool,
+                                                classification=classification).factor_value(
+                    start_date=date_needed_append_start, end_date=end_date).iloc[1:])
+                value_csv.to_csv(os.path.join(pwd, 'result',classification, fileName[:-3],'csv','factor_value',fileName[:-3]+'_factor_value.csv' ))
+            except:
+
+                value_csv = output.OutputResult(pwd=pwd, factor_input=result, factor_name=fileName[:-3], stock_pool=stock_pool,
+                                                classification=classification).factor_value(
+                    start_date=start_date, end_date=end_date)
             if analysis == True:
                 temp = output.OutputResult(pwd=pwd, factor_input=result, factor_name=fileName[:-3], stock_pool=stock_pool,
                                            classification=classification).factor_analysis(
@@ -96,21 +105,33 @@ class Run_Factor():
             with open(pwd + "omitted.txt", "a") as f:
                 f.write(fileName + ',')
         except (AttributeError):
-            print('因子 ' + fileName +  ' 返回值为空')
+            print('因子 ' + fileName[:-3] +  ' 返回值为空')
             pass
             with open(pwd + "omitted.txt", "a") as f:
-                f.write(fileName + ',')
+                f.write(fileName[:-3] + ',')
 
     def factor_analysis_selected_files(self, directory_name,file_name):
 
         try:
             if file_name.endswith('.py'):
+
                 module_name = os.path.splitext(file_name)[0]
+
                 module = importlib.import_module('factor.' + directory_name + '.' + module_name)
                 result = getattr(module, 'main')()
-                value_csv = output.OutputResult(pwd=pwd, factor_input=result, factor_name=file_name[:-3],
+                try:
+                    value_csv = pd.read_csv(os.path.join(pwd, 'result',directory_name, file_name[:-3],'csv','factor_value',file_name[:-3]+'_factor_value.csv' ),index_col = 0)
+                    date_needed_append_start = value_csv.index[-1]
+                    value_csv = value_csv.append(value_csv,
+                                          output.OutputResult(pwd=pwd, factor_input=result, factor_name=file_name[:-3],
+                                                              stock_pool=stock_pool,
+                                                              classification=directory_name).factor_value(
+                                              start_date=date_needed_append_start, end_date=end_date).iloc[1:])
+                    value_csv.to_csv(os.path.join(pwd, 'result',directory_name, file_name[:-3],'csv','factor_value',file_name[:-3]+'_factor_value.csv' ))
+                except:
+                    value_csv = output.OutputResult(pwd=pwd, factor_input=result, factor_name=file_name[:-3],
                                                 stock_pool=stock_pool, classification=directory_name).factor_value(
-                    start_date=start_date, end_date=end_date)
+                        start_date=start_date, end_date=end_date)
                 if self.analysis == True:
                     temp = output.OutputResult(pwd=pwd, factor_input=result, factor_name=file_name[:-3],
                                                stock_pool=stock_pool, classification=directory_name).factor_analysis(
@@ -144,7 +165,7 @@ class Run_Factor():
                 print('category参数输入错误，请选择selected_factor或all或selected_files')
 
             if self.category == 'selected_factor':
-                classification = '_'.join(factor_input)
+                classification_summary = '_'.join(factor_input)
                 directory = pwd + '/result/'
                 for factor in factor_input:
                     i = 0
@@ -180,7 +201,7 @@ class Run_Factor():
                         print('因子 ' + factor + ' 已经完成')
 
             if self.category == 'all':
-                classification = 'all'
+                classification_summary = 'all'
                 directory = pwd + '/result/'
                 for root, dirs, files in os.walk(directory):
                     root = root[len(pwd) + 1:]
@@ -192,7 +213,7 @@ class Run_Factor():
                         self.all_file_analysis(file)
 
             if self.category =='selected_files':
-                classification = '_'.join(factor_input)
+                classification_summary = '_'.join(factor_input)
                 for directory_name in factor_input:
                     factor_path = pwd + '/result/' + directory_name
                     for root, dirs, files in os.walk(factor_path):
@@ -211,7 +232,7 @@ class Run_Factor():
                 print('category参数输入错误，请选择selected_factor或all或selected_files')
 
             if self.category == 'selected_factor':
-                classification = '_'.join(factor_input)
+                classification_summary = '_'.join(factor_input)
                 directory = pwd + '/factor/'
                 for factor in factor_input:
 
@@ -221,28 +242,36 @@ class Run_Factor():
                         for fileName in files:
                             if fileName.endswith(post_fix) and fileName[:-3] == factor:
                                 factor_full_path = (root + '/' + fileName)[:-3].replace("/", '.')
-                                factor_full_path = factor_full_path.replace('\\', '.')
-                                classification = factor_full_path.split('.')[1]
-                                module = importlib.import_module(factor_full_path)
+                                factor_full_path_module = factor_full_path.replace('\\', '.')
+                                classification = factor_full_path_module.split('.')[1]
+                                module = importlib.import_module(factor_full_path_module)
                                 result = getattr(module, 'main')()
                                 # 此处计算因子
                                 fileName = fileName[:-3]
                                 try:
+                                    value_csv = pd.read_csv(os.path.join(pwd, 'result',classification, factor,'csv','factor_value',fileName+'_factor_value.csv' ),index_col = 0)
+                                    dates_updated_start =value_csv.index[-1]
+                                    value_csv = value_csv.append( output.OutputResult(factor_input=result, factor_name=fileName,
+                                                                    stock_pool=stock_pool, pwd=pwd,
+                                                                    classification=classification).factor_value(
+                                        start_date=dates_updated_start, end_date=end_date).iloc[1:])
+                                    value_csv.to_csv(os.path.join(pwd, 'result',classification, factor,'csv','factor_value',fileName+'_factor_value.csv' ))
+                                except:
                                     value_csv = output.OutputResult(factor_input=result, factor_name=fileName,
                                                                     stock_pool=stock_pool, pwd=pwd,
                                                                     classification=classification).factor_value(
                                         start_date=start_date, end_date=end_date)
                                     # 输入因子进行分析
-                                    if analysis == True:
-                                        temp = output.OutputResult(factor_input=result, factor_name=fileName,
-                                                                   stock_pool=stock_pool, pwd=pwd,
-                                                                   classification=classification).factor_analysis(df=value_csv)
-                                    if summary == True:
-                                        temp.columns = [fileName[:-3]]
-                                        temp.to_excel(pwd + '/result/temp_dir/' + fileName[:-3] + '_temp.xlsx')
-                                    i += 1
-                                except:
-                                    pass
+                                if analysis == True:
+                                    temp = output.OutputResult(factor_input=result, factor_name=fileName,
+                                                               stock_pool=stock_pool, pwd=pwd,
+                                                               classification=classification).factor_analysis(df=value_csv)
+                                if summary == True:
+                                    temp.columns = [fileName[:-3]]
+                                    temp.to_excel(pwd + '/result/temp_dir/' + fileName[:-3] + '_temp.xlsx')
+                                i += 1
+                                # finally:
+                                #     pass
                             else:
                                 continue
                     if i == 0:
@@ -256,12 +285,14 @@ class Run_Factor():
                 for root, dirs, files in os.walk(directory):
                     root = root[len(pwd) + 1:]
                     self.root = root
+                    # 抓取出所有py文件
                     files = [fileName for fileName in files if fileName.endswith(post_fix)]
                     if len(files) == 0:
                         continue
+                    classification = os.path.basename(root)
                     for file in files:
-                        self.all_file_search(file)
-                classification = 'all'
+                        self.all_file_search(file,classification)
+                classification_summary = 'all'
 
 
             if self.category == 'selected_files':
@@ -277,10 +308,10 @@ class Run_Factor():
                     for file_name in factor_list:
                         self.factor_analysis_selected_files(directory_name,file_name)
 
-                classification = '_'.join(factor_input)
+                classification_summary = '_'.join(factor_input)
         if summary == True:
             try:
-                generate_report.main(classification)
+                generate_report.main(classification_summary)
             except:
                 pass
 
