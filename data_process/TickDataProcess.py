@@ -151,7 +151,7 @@ class Tickdata():
         """
 
         data = data.loc[(data.time >= start_time) & (data.time <= end_time), :]
-        TWAP = ((data.high / 2 + data.low / 2)).sum() / len(data) / 10000
+        TWAP = data.last.sum() / len(data) / 10000
 
         return TWAP
 
@@ -164,7 +164,7 @@ class Tickdata():
         """
 
         data = data.loc[(data.time >= start_time) & (data.time <= 94000), :]
-        TWAP = ((data.high / 2 + data.low / 2)).sum() / len(data) / 10000
+        TWAP = data.last.sum() / len(data) / 10000
 
         return TWAP
 
@@ -177,7 +177,7 @@ class Tickdata():
         """
 
         data = data.loc[(data.time >= start_time) & (data.time <= 94500), :]
-        TWAP = ((data.high / 2 + data.low / 2)).sum() / len(data) / 10000
+        TWAP = data.last.sum() / len(data) / 10000
 
         return TWAP
     def calculate_UpDownLimitStatus(self, data):
