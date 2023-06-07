@@ -125,7 +125,6 @@ class Tickdata():
         :return:
         """
 
-        data['volume_change'] = data.volume - data.volume.shift(1)
         data = data.loc[(data.time >= start_time) & (data.time <= end_time), :]
         TWAP = ((data.high / 2 + data.low / 2)).sum() / len(data) / 10000
 
