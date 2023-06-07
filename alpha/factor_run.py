@@ -40,18 +40,18 @@ class Run_Factor():
         self.method = method
         self.omitted = []
         try:
-            shutil.rmtree(pwd + '/result/temp_dir')
+            shutil.rmtree(os.path.join(pwd , '/result/temp_dir'))
         except:
             pass
-        os.makedirs(pwd + '/result/temp_dir', exist_ok=True)
-        with open(pwd + "omitted.txt", "w") as f:
+        os.makedirs(os.path.join(pwd , '/result/temp_dir'), exist_ok=True)
+        with open(os.path.join(pwd , "omitted.txt"), "w") as f:
             f.write('')
 
     def all_file_analysis(self, fileName):
         try:
-            factor_full_path = (self.root  + '/'+ fileName)
+            factor_full_path = os.path.join(self.root , fileName)
             classification = factor_full_path.split('.')[1]
-            value_csv = pd.read_csv(pwd+factor_full_path,index_col = 0)
+            value_csv = pd.read_csv(os.path.join(pwd, factor_full_path),index_col = 0)
             value_csv.index = pd.to_datetime(value_csv.index)
             if analysis == True:
                 temp = output.OutputResult(pwd=pwd, factor_input='', factor_name=fileName[:-17], stock_pool=stock_pool,
@@ -144,6 +144,7 @@ class Run_Factor():
                 print('category参数输入错误，请选择selected_factor或all或selected_files')
 
             if self.category == 'selected_factor':
+                classification = '_'.join(factor_input)
                 directory = pwd + '/result/'
                 for factor in factor_input:
                     i = 0
@@ -162,7 +163,7 @@ class Run_Factor():
                                 # 此处计算因子
                                 fileName = fileName[:-17]
                                 if analysis == True:
-                                    temp = output.OutputResult(factor_input='', factor_name=fileName,
+                                    temp = output.OutputResult(factor_input=value_csv, factor_name=fileName,
                                                                stock_pool=stock_pool, pwd=pwd,
                                                                classification=classification).factor_analysis(df=value_csv)
                                 if summary == True:
@@ -179,6 +180,7 @@ class Run_Factor():
                         print('因子 ' + factor + ' 已经完成')
 
             if self.category == 'all':
+                classification = 'all'
                 directory = pwd + '/result/'
                 for root, dirs, files in os.walk(directory):
                     root = root[len(pwd) + 1:]
@@ -190,6 +192,7 @@ class Run_Factor():
                         self.all_file_analysis(file)
 
             if self.category =='selected_files':
+                classification = '_'.join(factor_input)
                 for directory_name in factor_input:
                     factor_path = pwd + '/result/' + directory_name
                     for root, dirs, files in os.walk(factor_path):
@@ -208,8 +211,10 @@ class Run_Factor():
                 print('category参数输入错误，请选择selected_factor或all或selected_files')
 
             if self.category == 'selected_factor':
+                classification = '_'.join(factor_input)
                 directory = pwd + '/factor/'
                 for factor in factor_input:
+
                     i = 0
                     for root, dirs, files in os.walk(directory):
                         root = root[len(pwd) + 1:]
@@ -256,6 +261,7 @@ class Run_Factor():
                         continue
                     for file in files:
                         self.all_file_search(file)
+                classification = 'all'
 
 
             if self.category == 'selected_files':
@@ -271,9 +277,10 @@ class Run_Factor():
                     for file_name in factor_list:
                         self.factor_analysis_selected_files(directory_name,file_name)
 
+                classification = '_'.join(factor_input)
         if summary == True:
             try:
-                generate_report.main()
+                generate_report.main(classification)
             except:
                 pass
 
@@ -281,7 +288,7 @@ class Run_Factor():
 
 
 pwd = os.path.abspath(__file__)[:-len(os.path.basename(__file__))]
-with open(pwd + 'config.json') as f:
+with open(os.path.join(pwd , 'config.json')) as f:
     data = json.load(f)
 
 parser = argparse.ArgumentParser()

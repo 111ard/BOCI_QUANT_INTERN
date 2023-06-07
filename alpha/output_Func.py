@@ -145,7 +145,7 @@ class OutputResult():
         # 保存工作簿并关闭Excel应用程序
         workbook.save(self.pwd +'/result/' + self.factor_name + '/csv/'+ self.factor_name + "_factor_summary.xlsx")
         """
-        top_minus_bottom_returns = float(np.cumprod(1 + result['quantile'].top_minus_bottom_returns['P_1'] / 2)[-1]) - 1
+        top_minus_bottom_returns = float(result['quantile'].top_minus_bottom_returns['P_1'] [-1])
         factor_return = result['return'].factor_returns['P_1'][-1]
         factor_mdd = result['return'].max_drawdown().iloc[0]
         factor_std = result['return'].std().iloc[0]
