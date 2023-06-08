@@ -80,8 +80,8 @@ class FactorRun():
     # 最基础的单元是处理每个因子，抓住这个本质
     def run_basic_mode(self,all_factors):
         # 单个模式
-        for factor_name in all_factors:
-            self.process_factor(factor_name)
+        # for factor_name in all_factors:
+        #     self.process_factor(factor_name)
 
         # !!! 在此处改成multiprocess !!!
         if __name__ =='__main__':
@@ -195,11 +195,8 @@ class FactorRun():
         :return:
         """
         for factor in factors:
-            if factor not in result:
-                print('净值文件无法找到')
-            else:
-                df = pd.read_csv(factor_nv_path)
-                Output().run_analysis(df)
+            self.unit_factor_analysis(factor)
+
 
 
 start_time = time.time()
