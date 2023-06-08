@@ -98,10 +98,13 @@ class Run_Factor():
                 value_csv = pd.read_csv(os.path.join(pwd, result,classification, fileName[:-3],'csv','factor_value',fileName+'_factor_value.csv' ),index_col = 0)
                 logging.info(fileName[:-3] + '已经存在，已读取')
                 date_needed_append_start = value_csv.index[-1]
-
-                value_csv = value_csv.iloc[:-1].append(output.OutputResult(pwd=pwd, factor_input=result, factor_name=fileName[:-3], stock_pool=stock_pool,
+                if date_needed_append_start==end_date:
+                    value_csv = value_csv
+                    logging.info(fileName[:-3] + '已经是最新')
+                else:
+                    value_csv = value_csv.iloc[:-1].append(output.OutputResult(pwd=pwd, factor_input=result, factor_name=fileName[:-3], stock_pool=stock_pool,
                                                 classification=classification).factor_value(
-                    start_date=date_needed_append_start, end_date=end_date))
+                        start_date=date_needed_append_start, end_date=end_date))
                 logging.info(fileName[:-3] + '已经完成并输出')
                 value_csv.to_csv(os.path.join(pwd, 'result',classification, fileName[:-3],'csv','factor_value',fileName[:-3]+'_factor_value.csv' ))
             except:
@@ -146,7 +149,11 @@ class Run_Factor():
                     logging.info(file_name[:-3] + '已经存在，已读取')
                     date_needed_append_start = value_csv.index[-1]
                     #logging.info(str(date_needed_append_start))
-                    value_csv = value_csv.append(
+                    if date_needed_append_start==end_date:
+                        value_csv ==value_csv
+                        logging.info(file_name[:-3] + '已经存在且是最新')
+                    else:
+                        value_csv = value_csv.append(
                         output.OutputResult(pwd=pwd, factor_input=result, factor_name=file_name[:-3],
                                             stock_pool=stock_pool,
                                             classification=directory_name).factor_value(
@@ -286,12 +293,15 @@ class Run_Factor():
                                     value_csv = pd.read_csv(os.path.join(pwd, 'result',classification, factor,'csv','factor_value',fileName+'_factor_value.csv' ),index_col = 0)
                                     logging.info(fileName + '已经存在，已读取')
                                     dates_updated_start =value_csv.index[-1]
-                                    value_csv = value_csv.append( output.OutputResult(factor_input=result, factor_name=fileName,
+                                    if dates_updated_start==end_date:
+                                        logging.info('因子 ' + fileName + ' 已经是最新')
+                                    else:
+                                        value_csv = value_csv.append( output.OutputResult(factor_input=result, factor_name=fileName,
                                                                     stock_pool=stock_pool, pwd=pwd,
                                                                     classification=classification).factor_value(
                                         start_date=dates_updated_start, end_date=end_date).iloc[1:])
                                     value_csv.to_csv(os.path.join(pwd, 'result',classification, factor,'csv','factor_value',fileName+'_factor_value.csv' ))
-                                    logging.info('因子 ' + fileName + ' 已经完成')
+                                    logging.info('因子 ' + fileName + ' 已经完成并输出')
                                 except:
                                     logging.info(fileName + '不存在，从起始日期开始计算')
                                     value_csv = output.OutputResult(factor_input=result, factor_name=fileName,
