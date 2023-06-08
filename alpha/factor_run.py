@@ -99,7 +99,7 @@ class Run_Factor():
                 logging.info(fileName[:-3] + '已经存在，已读取')
                 date_needed_append_start = value_csv.index[-1]
                 if date_needed_append_start==end_date:
-                    value_csv = value_csv
+                    #value_csv = value_csv
                     logging.info(fileName[:-3] + '已经是最新')
                 else:
                     value_csv = value_csv.iloc[:-1].append(output.OutputResult(pwd=pwd, factor_input=result, factor_name=fileName[:-3], stock_pool=stock_pool,
@@ -150,7 +150,7 @@ class Run_Factor():
                     date_needed_append_start = value_csv.index[-1]
                     #logging.info(str(date_needed_append_start))
                     if date_needed_append_start==end_date:
-                        value_csv ==value_csv
+                        #value_csv ==value_csv
                         logging.info(file_name[:-3] + '已经存在且是最新')
                     else:
                         value_csv = value_csv.append(
@@ -367,6 +367,8 @@ class Run_Factor():
                 pass
 
 
+def main():
+    if option.summary:
 
 
 pwd = os.path.abspath(__file__)[:-len(os.path.basename(__file__))]
@@ -374,9 +376,9 @@ with open(os.path.join(pwd , 'config.json')) as f:
     data = json.load(f)
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--process', type=int, help='execute_method')
+# parser.add_argument('--process', type=int, help='execute_method')
 parser.add_argument('--method', type=str, help='execute_method')
-parser.add_argument('--category', type=str, help='execute_method')
+parser.add_argument('--category', type=str, help='execute_category')
 parser.add_argument('--factor_input', type=str, nargs='+', help='factor_input')
 parser.add_argument("--analysis", action="store_true")
 parser.add_argument("--summary", action="store_true")
