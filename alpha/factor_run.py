@@ -88,6 +88,27 @@ class FactorRun():
                 for folder in all_folders:
                     all_factors += self.find_factors_in_folder(folder)
                 self.run_analysis(all_factors)
+
+        if self.option == 'report':
+            if self.category == 'selected_factors':
+                all_factors = args.input
+                self.factor_report(all_factors)
+
+            if self.category == 'selected_folders':
+                all_folders = args.input
+                all_factors = []
+                for folder in all_folders:
+                    all_factors += self.find_factors_in_folder(folder)
+                self.factor_report(all_factors)
+
+            if self.category == 'all':
+                # 扫描factor文件夹，得到所有的文件夹，再回到第二种模式
+                all_folders = self.scan_factor_folder()
+                all_factors = []
+                for folder in all_folders:
+                    all_factors += self.find_factors_in_folder(folder)
+                self.factor_report(all_factors)
+
         #     run_analysis(all_factors)
         # if roption.report:
         #     run_report(all_factors)
@@ -212,14 +233,9 @@ class FactorRun():
         :param factors:
         :return:
         """
-        try:
-            shutil.rmtree(os.path.join(self.pwd, 'result', 'temp_dir'))
-        except:
-            pass
-        os.makedirs(os.path.join(self.pwd, 'result', 'temp_dir'))
+
         for factor in factors:
             self.unit_factor_analysis(factor)
-        lib.OutputResult(factor_result_path = '', pwd = self.pwd).generate_report()
 
     def unit_factor_analysis(self, factor):
         file_name = factor + '_factor_value.csv'
@@ -236,6 +252,28 @@ class FactorRun():
             lib.OutputResult(file_path, self.pwd).factor_analysis(df, factor)
             print('因子'+factor+'已经完成分析')
 
+    def factor_report(self,factors):
+        try:
+            shutil.rmtree(os.path.join(self.pwd, 'result', 'temp_dir'))
+        except:
+            pass
+        os.makedirs(os.path.join(self.pwd, 'result', 'temp_dir'))
+        for factor in factors:
+            self.unit_factor_report(factor)
+        lib.OutputResult(factor_result_path = '',pwd = self.pwd).generate_report()
+        print('报告已经生成')
+
+    def unit_factor_report(self,factor):
+        classifcation = self.factor_classification(factor)
+        factor_result_path = os.path.join(self.pwd, 'result',classifcation,factor )
+        try:
+            lib.OutputResult(factor_result_path = factor_result_path,pwd = self.pwd).temp_generation(factor)
+            print('因子'+factor+'分析文件读取并生成完毕')
+        except FileNotFoundError:
+            print('因子'+ factor+'分析文件不存在，请先使用analysis模式生成分析文件')
+
+
+
 
 start_time = time.time()
 print('程序开始执行')
@@ -245,7 +283,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--category', type=str, help='execute_category')
 parser.add_argument('--option', type=str, help='execute_option')
 parser.add_argument('--input', type=str, nargs='+', help='factors_or_folders_input')
-
+#parser.add_argument('--option', choices={"0", "1", ...})
 
 args = parser.parse_args()
 
