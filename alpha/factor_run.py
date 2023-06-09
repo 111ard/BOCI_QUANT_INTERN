@@ -47,7 +47,7 @@ class FactorRun():
         self.stock_pool = stock_pool
 
     def main(self):
-        if self.option == 'backtest':
+        if 'backtest' in self.option :
             if self.category == 'selected_factors':
                 all_factors = args.input
                 self.run_basic_mode(all_factors)
@@ -69,7 +69,7 @@ class FactorRun():
                     all_factors += self.find_factors_in_folder(folder)
                 self.run_basic_mode(all_factors)
 
-        if self.option == 'analysis':
+        if 'analysis' in self.option:
             if self.category == 'selected_factors':
                 all_factors = args.input
                 self.run_analysis(all_factors)
@@ -89,7 +89,7 @@ class FactorRun():
                     all_factors += self.find_factors_in_folder(folder)
                 self.run_analysis(all_factors)
 
-        if self.option == 'report':
+        if 'report' in self.option:
             if self.category == 'selected_factors':
                 all_factors = args.input
                 self.factor_report(all_factors)
@@ -117,13 +117,13 @@ class FactorRun():
     # 最基础的单元是处理每个因子，抓住这个本质
     def run_basic_mode(self, all_factors):
         # 单个模式
-        # for factor_name in all_factors:
-        #     self.process_factor(factor_name)
+        for factor_name in all_factors:
+            self.process_factor(factor_name)
 
         # !!! 在此处改成multiprocess !!!
-        if __name__ == '__main__':
-            with multiprocessing.Pool(processes=4) as pool:
-                pool.map(self.process_factor, all_factors)
+        # if __name__ == '__main__':
+        #     with multiprocessing.Pool(processes=4) as pool:
+        #         pool.map(self.process_factor, all_factors)
 
     # 多进程跑这个函数即可
     def process_factor(self, factor_name):
@@ -281,7 +281,7 @@ rqdatac.init()
 parser = argparse.ArgumentParser()
 
 parser.add_argument('--category', type=str, help='execute_category')
-parser.add_argument('--option', type=str, help='execute_option')
+parser.add_argument('--option', type=str, nargs='+', help='execute_option')
 parser.add_argument('--input', type=str, nargs='+', help='factors_or_folders_input')
 #parser.add_argument('--option', choices={"0", "1", ...})
 
