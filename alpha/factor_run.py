@@ -11,6 +11,17 @@ import warnings
 import time
 import json
 import shutil
+import logging
+
+
+root_logger = logging.getLogger()
+for h in root_logger.handlers:
+    root_logger.removeHandler(h)
+
+logging.basicConfig(format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s',
+                    level=logging.DEBUG,
+                    filename=os.path.join(os.path.abspath(__file__)[:-len(os.path.basename(__file__))], 'log', 'recording_demo.log'),
+                    filemode='w')
 
 warnings.filterwarnings('ignore')
 
@@ -36,6 +47,8 @@ class FactorRun():
         self.category = args.category
         os.makedirs(self.pwd + '/result', exist_ok=True)
         os.makedirs(self.pwd + '/log', exist_ok=True)
+
+
 
         all_in = rqdatac.all_instruments()
         stock_pool = pd.read_excel(self.pwd + 'stock_pool.xlsx')
@@ -131,6 +144,7 @@ class FactorRun():
 
         # 1. 检查factor相关文件是否存在
         if not self.factor_exist(factor_name):
+            logging.info("Factor " + factor_name + " 文件不存在")
             print("Factor " + factor_name + " 文件不存在")
             return
 
@@ -147,20 +161,24 @@ class FactorRun():
             # 如果已经是最新
             # print("".join(backtest_started_date.split('-'))[:8],'|||',self.end_date)
             if "".join(backtest_started_date.split('-'))[:8] == self.end_date:
+                logging.info(factor_name + '已经是最新')
                 print(factor_name + '已经是最新')
                 return
             # 如果不是最新
+            logging.info('因子' + factor_name + '不是最新，读取后计算')
             print('因子' + factor_name + '不是最新，读取后计算')
             factor_df = existed_nv_df.append(
                 self.run_factor(factor_name, classification, backtest_started_date, self.end_date).iloc[1:])
 
         # 文件不存在，则从头开始读
         if not self.factor_net_value_existed(factor_name, classification):
+            logging.info('因子' + factor_name + '不存在，从头开始计算')
             print('因子' + factor_name + '不存在，从头开始计算')
             factor_df = self.run_factor(factor_name, classification, self.start_date, self.end_date)
 
         factor_df.to_csv(os.path.join(self.pwd, 'result', classification, factor_name, 'csv', 'factor_value',
                                       factor_name + '_factor_value.csv'))
+        logging.info('因子' + factor_name + '已经计算完毕并输出csv文件')
         print('因子' + factor_name + '已经计算完毕并输出csv文件')
 
     def factor_exist(self, factor_name):
@@ -188,6 +206,7 @@ class FactorRun():
             df = execute_factor(result, self.stock_pool, start_date, end_date)
             return df
         except TypeError:
+            logging.info('因子' + factor_name + '返回值为none，若是子定义因子请检查定义，若是调用米筐内置因子请检查是否存在此因子')
             print('因子' + factor_name + '返回值为none，若是子定义因子请检查定义，若是调用米筐内置因子请检查是否存在此因子')
             with open(os.path.join(self.pwd, "test.txt"), "w") as f:
                 f.write(factor_name + '  , ')
@@ -202,8 +221,10 @@ class FactorRun():
         factor_temp_list = []
         folder_path = os.path.join(self.pwd, 'factor', folder)
         if folder not in os.listdir(os.path.join(self.pwd, 'factor/')):
+            logging.info(folder + '文件夹不存在')
             print(folder + '文件夹不存在')
         else:
+            logging.info(folder + '文件夹已经找到，开始扫描')
             print(folder + '文件夹已经找到，开始扫描')
             for root, dirs, files in os.walk(folder_path):
                 for file in files:
@@ -243,13 +264,16 @@ class FactorRun():
         file_path = os.path.join(self.pwd, 'result', classifcation, factor)
         csv_path = os.path.join(self.pwd, 'result', classifcation, factor, 'csv', 'factor_value')
         if file_name not in os.listdir(csv_path):
+            logging.info('因子'+factor+'净值文件不存在')
             print('因子'+factor+'净值文件不存在')
             return
         else:
+            logging.info('因子'+factor+'净值文件已找到并读取，开始分析')
             print('因子'+factor+'净值文件已找到并读取，开始分析')
             df = pd.read_csv(os.path.join(csv_path, factor + '_factor_value.csv'), index_col=0)
             df.index = pd.to_datetime(df.index)
             lib.OutputResult(file_path, self.pwd).factor_analysis(df, factor)
+            logging.info('因子'+factor+'已经完成分析')
             print('因子'+factor+'已经完成分析')
 
     def factor_report(self,factors):
@@ -261,6 +285,7 @@ class FactorRun():
         for factor in factors:
             self.unit_factor_report(factor)
         lib.OutputResult(factor_result_path = '',pwd = self.pwd).generate_report()
+        logging.info('报告已经生成')
         print('报告已经生成')
 
     def unit_factor_report(self,factor):
@@ -268,14 +293,17 @@ class FactorRun():
         factor_result_path = os.path.join(self.pwd, 'result',classifcation,factor )
         try:
             lib.OutputResult(factor_result_path = factor_result_path,pwd = self.pwd).temp_generation(factor)
+            logging.info('因子'+factor+'分析文件读取并生成完毕')
             print('因子'+factor+'分析文件读取并生成完毕')
         except FileNotFoundError:
+            logging.info('因子'+ factor+'分析文件不存在，请先使用analysis模式生成分析文件')
             print('因子'+ factor+'分析文件不存在，请先使用analysis模式生成分析文件')
 
 
 
 
 start_time = time.time()
+logging.info('程序开始执行')
 print('程序开始执行')
 rqdatac.init()
 parser = argparse.ArgumentParser()
@@ -289,5 +317,7 @@ args = parser.parse_args()
 
 FactorRun().main()
 end_time = time.time()
+logging.info('程序执行完毕')
 print('程序执行完毕')
+logging.info('用时为' + str(end_time - start_time) + 's')
 print('用时为' + str(end_time - start_time) + 's')
