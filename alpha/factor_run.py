@@ -20,10 +20,13 @@ for h in root_logger.handlers:
 
 logging.basicConfig(format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s',
                     level=logging.DEBUG,
-                    filename=os.path.join(os.path.abspath(__file__)[:-len(os.path.basename(__file__))], 'log', 'recording_demo.log'),
+                    filename=os.path.join(os.path.abspath(__file__)[:-len(os.path.basename(__file__))], 'log', 'recording'+time.strftime('%Y-%m-%d-%H-%M-%S',time.localtime())+'.log'),
                     filemode='w')
 
+
 warnings.filterwarnings('ignore')
+console_handler = logging.StreamHandler()
+root_logger.addHandler(console_handler)
 
 
 class FactorRun():
@@ -42,7 +45,7 @@ class FactorRun():
 
         self.start_date = data['start_date']
         self.end_date = data['end_date']
-
+        self.temp_dir_path = data['temp_dir_path']
         self.option = args.option
         self.category = args.category
         os.makedirs(self.pwd + '/result', exist_ok=True)
@@ -51,7 +54,7 @@ class FactorRun():
 
 
         all_in = rqdatac.all_instruments()
-        stock_pool = pd.read_excel(self.pwd + 'stock_pool.xlsx')
+        stock_pool = pd.read_excel(os.path.join(self.pwd , data['stock_pool_path']))
         all_in = pd.merge(stock_pool, all_in, left_on='证券名称', right_on='symbol', how='right')
         # 此处dropna会去掉1、ST的股票以及2、米筐中不存在其数据的股票
         all_in = all_in.dropna(subset=['证券代码'])
@@ -71,7 +74,7 @@ class FactorRun():
                 all_factors = []
                 for folder in all_folders:
                     all_factors += self.find_factors_in_folder(folder)
-                # print(all_factors)
+                # #print(all_factors)
                 self.run_basic_mode(all_factors)
 
             if self.category == 'all':
@@ -130,14 +133,15 @@ class FactorRun():
     # 最基础的单元是处理每个因子，抓住这个本质
     def run_basic_mode(self, all_factors):
         # 单个模式
-        for factor_name in all_factors:
-            self.process_factor(factor_name)
+        # for factor_name in all_factors:
+        #     self.process_factor(factor_name)
 
         # !!! 在此处改成multiprocess !!!
-        # if __name__ == '__main__':
-        #     with multiprocessing.Pool(processes=4) as pool:
-        #         pool.map(self.process_factor, all_factors)
-
+        if __name__ == '__main__':
+            with multiprocessing.Pool(processes=4) as pool:
+                pool.map(self.process_factor, all_factors)
+                # if 'analysis' in self.option and 'backtest' in self.option:
+                #     pool.map(self.run_analysis, all_factors)
     # 多进程跑这个函数即可
     def process_factor(self, factor_name):
         # 首先找到因子的分类
@@ -145,7 +149,7 @@ class FactorRun():
         # 1. 检查factor相关文件是否存在
         if not self.factor_exist(factor_name):
             logging.info("Factor " + factor_name + " 文件不存在")
-            print("Factor " + factor_name + " 文件不存在")
+            #print("Factor " + factor_name + " 文件不存在")
             return
 
         # 2. 检查factor的输出csv
@@ -159,27 +163,27 @@ class FactorRun():
                              factor_name + '_factor_value.csv'), index_col=0)
             backtest_started_date = existed_nv_df.index[-1]
             # 如果已经是最新
-            # print("".join(backtest_started_date.split('-'))[:8],'|||',self.end_date)
+            # #print("".join(backtest_started_date.split('-'))[:8],'|||',self.end_date)
             if "".join(backtest_started_date.split('-'))[:8] == self.end_date:
                 logging.info(factor_name + '已经是最新')
-                print(factor_name + '已经是最新')
+                #print(factor_name + '已经是最新')
                 return
             # 如果不是最新
             logging.info('因子' + factor_name + '不是最新，读取后计算')
-            print('因子' + factor_name + '不是最新，读取后计算')
+            #print('因子' + factor_name + '不是最新，读取后计算')
             factor_df = existed_nv_df.append(
                 self.run_factor(factor_name, classification, backtest_started_date, self.end_date).iloc[1:])
 
         # 文件不存在，则从头开始读
         if not self.factor_net_value_existed(factor_name, classification):
             logging.info('因子' + factor_name + '不存在，从头开始计算')
-            print('因子' + factor_name + '不存在，从头开始计算')
+            #print('因子' + factor_name + '不存在，从头开始计算')
             factor_df = self.run_factor(factor_name, classification, self.start_date, self.end_date)
 
         factor_df.to_csv(os.path.join(self.pwd, 'result', classification, factor_name, 'csv', 'factor_value',
                                       factor_name + '_factor_value.csv'))
         logging.info('因子' + factor_name + '已经计算完毕并输出csv文件')
-        print('因子' + factor_name + '已经计算完毕并输出csv文件')
+        #print('因子' + factor_name + '已经计算完毕并输出csv文件')
 
     def factor_exist(self, factor_name):
         factor_py_name = factor_name + '.py'
@@ -207,7 +211,7 @@ class FactorRun():
             return df
         except TypeError:
             logging.info('因子' + factor_name + '返回值为none，若是子定义因子请检查定义，若是调用米筐内置因子请检查是否存在此因子')
-            print('因子' + factor_name + '返回值为none，若是子定义因子请检查定义，若是调用米筐内置因子请检查是否存在此因子')
+            #print('因子' + factor_name + '返回值为none，若是子定义因子请检查定义，若是调用米筐内置因子请检查是否存在此因子')
             with open(os.path.join(self.pwd, "test.txt"), "w") as f:
                 f.write(factor_name + '  , ')
 
@@ -222,10 +226,10 @@ class FactorRun():
         folder_path = os.path.join(self.pwd, 'factor', folder)
         if folder not in os.listdir(os.path.join(self.pwd, 'factor/')):
             logging.info(folder + '文件夹不存在')
-            print(folder + '文件夹不存在')
+            #print(folder + '文件夹不存在')
         else:
             logging.info(folder + '文件夹已经找到，开始扫描')
-            print(folder + '文件夹已经找到，开始扫描')
+            #print(folder + '文件夹已经找到，开始扫描')
             for root, dirs, files in os.walk(folder_path):
                 for file in files:
                     if file.endswith('.py'):
@@ -237,15 +241,15 @@ class FactorRun():
 
     def factor_output_dirs_check(self, factor_name, classification):
 
-        os.makedirs(self.pwd + '/result/' + classification, exist_ok=True)
-        os.makedirs(self.pwd + '/result/' + classification + '/' + factor_name + '/jpg', exist_ok=True)
-        os.makedirs(self.pwd + '/result/' + classification + '/' + factor_name + '/csv', exist_ok=True)
-        os.makedirs(self.pwd + '/result/' + classification + '/' + factor_name + '/csv/' + 'ic_analysis', exist_ok=True)
-        os.makedirs(self.pwd + '/result/' + classification + '/' + factor_name + '/csv/' + 'quantile_analysis',
+        os.makedirs(os.path.join(self.pwd , 'result' , classification), exist_ok=True)
+        os.makedirs(os.path.join(self.pwd , 'result' , classification ,factor_name , '/jpg'), exist_ok=True)
+        os.makedirs(os.path.join(self.pwd , 'result' , classification   , factor_name , 'csv'), exist_ok=True)
+        os.makedirs(os.path.join(self.pwd , 'result' , classification   , factor_name , 'csv' , 'ic_analysis'), exist_ok=True)
+        os.makedirs(os.path.join(self.pwd , 'result' , classification ,   factor_name , 'csv' , 'quantile_analysis'),
                     exist_ok=True)
-        os.makedirs(self.pwd + '/result/' + classification + '/' + factor_name + '/csv/' + 'return_analysis',
+        os.makedirs(os.path.join(self.pwd , 'result' , classification   , factor_name , 'csv' , 'return_analysis'),
                     exist_ok=True)
-        os.makedirs(self.pwd + '/result/' + classification + '/' + factor_name + '/csv/' + 'factor_value',
+        os.makedirs(os.path.join(self.pwd , 'result' , classification   , factor_name , 'csv' , 'factor_value'),
                     exist_ok=True)  # 此处dropna会去掉1、ST的股票以及2、米筐中不存在其数据的股票
 
     def run_analysis(self, factors):
@@ -255,8 +259,11 @@ class FactorRun():
         :return:
         """
 
-        for factor in factors:
-            self.unit_factor_analysis(factor)
+        # for factor in factors:
+        #     self.unit_factor_analysis(factor)
+        if __name__ == '__main__':
+            with multiprocessing.Pool(processes=4) as pool:
+                pool.map(self.unit_factor_analysis, factors)
 
     def unit_factor_analysis(self, factor):
         file_name = factor + '_factor_value.csv'
@@ -265,28 +272,28 @@ class FactorRun():
         csv_path = os.path.join(self.pwd, 'result', classifcation, factor, 'csv', 'factor_value')
         if file_name not in os.listdir(csv_path):
             logging.info('因子'+factor+'净值文件不存在')
-            print('因子'+factor+'净值文件不存在')
+            #print('因子'+factor+'净值文件不存在')
             return
         else:
             logging.info('因子'+factor+'净值文件已找到并读取，开始分析')
-            print('因子'+factor+'净值文件已找到并读取，开始分析')
+            #print('因子'+factor+'净值文件已找到并读取，开始分析')
             df = pd.read_csv(os.path.join(csv_path, factor + '_factor_value.csv'), index_col=0)
             df.index = pd.to_datetime(df.index)
             lib.OutputResult(file_path, self.pwd).factor_analysis(df, factor)
             logging.info('因子'+factor+'已经完成分析')
-            print('因子'+factor+'已经完成分析')
+            #print('因子'+factor+'已经完成分析')
 
     def factor_report(self,factors):
         try:
             shutil.rmtree(os.path.join(self.pwd, 'result', 'temp_dir'))
         except:
             pass
-        os.makedirs(os.path.join(self.pwd, 'result', 'temp_dir'))
+        os.makedirs(os.path.join(self.pwd, self.temp_dir_path))
         for factor in factors:
             self.unit_factor_report(factor)
         lib.OutputResult(factor_result_path = '',pwd = self.pwd).generate_report()
         logging.info('报告已经生成')
-        print('报告已经生成')
+        #print('报告已经生成')
 
     def unit_factor_report(self,factor):
         classifcation = self.factor_classification(factor)
@@ -294,17 +301,17 @@ class FactorRun():
         try:
             lib.OutputResult(factor_result_path = factor_result_path,pwd = self.pwd).temp_generation(factor)
             logging.info('因子'+factor+'分析文件读取并生成完毕')
-            print('因子'+factor+'分析文件读取并生成完毕')
+            #print('因子'+factor+'分析文件读取并生成完毕')
         except FileNotFoundError:
             logging.info('因子'+ factor+'分析文件不存在，请先使用analysis模式生成分析文件')
-            print('因子'+ factor+'分析文件不存在，请先使用analysis模式生成分析文件')
+            #print('因子'+ factor+'分析文件不存在，请先使用analysis模式生成分析文件')
 
 
 
 
 start_time = time.time()
 logging.info('程序开始执行')
-print('程序开始执行')
+#print('程序开始执行')
 rqdatac.init()
 parser = argparse.ArgumentParser()
 
@@ -318,6 +325,6 @@ args = parser.parse_args()
 FactorRun().main()
 end_time = time.time()
 logging.info('程序执行完毕')
-print('程序执行完毕')
+#print('程序执行完毕')
 logging.info('用时为' + str(end_time - start_time) + 's')
-print('用时为' + str(end_time - start_time) + 's')
+#print('用时为' + str(end_time - start_time) + 's')
