@@ -18,15 +18,18 @@ root_logger = logging.getLogger()
 for h in root_logger.handlers:
     root_logger.removeHandler(h)
 
+os.makedirs(os.path.abspath(__file__)[:-len(os.path.basename(__file__))] + '/log', exist_ok=True)
 logging.basicConfig(format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s',
                     level=logging.DEBUG,
-                    filename=os.path.join(os.path.abspath(__file__)[:-len(os.path.basename(__file__))], 'log', 'recording'+time.strftime('%Y-%m-%d-%H-%M-%S',time.localtime())+'.log'),
+                    filename=os.path.join(os.path.abspath(__file__)[:-len(os.path.basename(__file__))], 'log',
+                                          'recording' + time.strftime('%Y-%m-%d-%H-%M-%S',
+                                                                      time.localtime()) + '.log'),
                     filemode='w')
-
-
-warnings.filterwarnings('ignore')
 console_handler = logging.StreamHandler()
 root_logger.addHandler(console_handler)
+
+warnings.filterwarnings('ignore')
+
 
 
 class FactorRun():
@@ -49,8 +52,6 @@ class FactorRun():
         self.option = args.option
         self.category = args.category
         os.makedirs(self.pwd + '/result', exist_ok=True)
-        os.makedirs(self.pwd + '/log', exist_ok=True)
-
 
 
         all_in = rqdatac.all_instruments()
@@ -133,13 +134,13 @@ class FactorRun():
     # 最基础的单元是处理每个因子，抓住这个本质
     def run_basic_mode(self, all_factors):
         # 单个模式
-        # for factor_name in all_factors:
-        #     self.process_factor(factor_name)
+        for factor_name in all_factors:
+            self.process_factor(factor_name)
 
         # !!! 在此处改成multiprocess !!!
-        if __name__ == '__main__':
-            with multiprocessing.Pool(processes=4) as pool:
-                pool.map(self.process_factor, all_factors)
+        # if __name__ == '__main__':
+        #     with multiprocessing.Pool(processes=4) as pool:
+        #         pool.map(self.process_factor, all_factors)
                 # if 'analysis' in self.option and 'backtest' in self.option:
                 #     pool.map(self.run_analysis, all_factors)
     # 多进程跑这个函数即可
@@ -242,7 +243,7 @@ class FactorRun():
     def factor_output_dirs_check(self, factor_name, classification):
 
         os.makedirs(os.path.join(self.pwd , 'result' , classification), exist_ok=True)
-        os.makedirs(os.path.join(self.pwd , 'result' , classification ,factor_name , '/jpg'), exist_ok=True)
+        os.makedirs(os.path.join(self.pwd , 'result' , classification ,factor_name , 'jpg'), exist_ok=True)
         os.makedirs(os.path.join(self.pwd , 'result' , classification   , factor_name , 'csv'), exist_ok=True)
         os.makedirs(os.path.join(self.pwd , 'result' , classification   , factor_name , 'csv' , 'ic_analysis'), exist_ok=True)
         os.makedirs(os.path.join(self.pwd , 'result' , classification ,   factor_name , 'csv' , 'quantile_analysis'),
@@ -259,11 +260,11 @@ class FactorRun():
         :return:
         """
 
-        # for factor in factors:
-        #     self.unit_factor_analysis(factor)
-        if __name__ == '__main__':
-            with multiprocessing.Pool(processes=4) as pool:
-                pool.map(self.unit_factor_analysis, factors)
+        for factor in factors:
+            self.unit_factor_analysis(factor)
+        # if __name__ == '__main__':
+        #     with multiprocessing.Pool(processes=4) as pool:
+        #         pool.map(self.unit_factor_analysis, factors)
 
     def unit_factor_analysis(self, factor):
         file_name = factor + '_factor_value.csv'
