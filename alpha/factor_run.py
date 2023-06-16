@@ -49,6 +49,7 @@ class FactorRun():
         self.start_date = data['start_date']
         self.end_date = data['end_date']
         self.temp_dir_path = data['temp_dir_path']
+        self.omit_path = data['omit_path']
         self.option = args.option
         self.category = args.category
         os.makedirs(self.pwd + '/result', exist_ok=True)
@@ -213,7 +214,7 @@ class FactorRun():
         except (TypeError ,AttributeError):
             logging.info('因子' + factor_name + '返回值为none，若是自定义因子请检查定义，若是调用米筐内置因子请检查是否存在此因子')
             #print('因子' + factor_name + '返回值为none，若是子定义因子请检查定义，若是调用米筐内置因子请检查是否存在此因子')
-            with open(os.path.join(self.pwd, "omitted.txt"), "w") as f:
+            with open(os.path.join(self.pwd, self.omit_path), "w") as f:
                 f.write(factor_name + '  , ')
 
     def factor_classification(self, factor_name):
